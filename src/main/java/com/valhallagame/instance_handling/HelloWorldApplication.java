@@ -31,11 +31,13 @@ public class HelloWorldApplication extends Application<HelloWorldConfiguration> 
 		
 		final HelloWorldResource helloWorldResource = new HelloWorldResource(configuration.getTemplate(), configuration.getDefaultName());
 		final TestResource testResource = new TestResource(testDAO);
+		final InstanceResource instanceResource = new InstanceResource();
 		
 		final TemplateHealthCheck healthCheck = new TemplateHealthCheck(configuration.getTemplate());
 		
 		environment.healthChecks().register("template", healthCheck);
 		environment.jersey().register(helloWorldResource);
 		environment.jersey().register(testResource);
+		environment.jersey().register(instanceResource);
 	}
 }
