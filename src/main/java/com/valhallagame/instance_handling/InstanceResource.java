@@ -1,10 +1,11 @@
 package com.valhallagame.instance_handling;
 
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import com.codahale.metrics.annotation.Timed;
 
@@ -12,20 +13,11 @@ import com.codahale.metrics.annotation.Timed;
 @Produces(MediaType.APPLICATION_JSON)
 public class InstanceResource {
 	
-	@GET
+	@POST
 	@Timed
 	@Path("start")
-	public String start(@QueryParam("level") String level,@QueryParam("version") String version,@QueryParam("persistentServerUrl") String persistentServerUrl) {
-		
-		InstanceHandler.getInstanceHandler().queue(new TestInstance(level, version, persistentServerUrl));
-		
-		try {
-			Thread.sleep(10000);
-		} catch (InterruptedException e) {
-		}
-		
-		InstanceHandler.getInstanceHandler().close();
-		
-		return "ServerStarted and Closed";
+	public Response start2(InstanceStart instanceStart) {
+		InstanceHandler.getInstanceHandler().queue(new TestInstance(instanceStart.level, instanceStart.version, instanceStart.persistentServerUrl));
+		return JS.message(Status.OK, "Server started");
 	}
 }

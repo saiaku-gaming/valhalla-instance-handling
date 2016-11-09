@@ -10,7 +10,7 @@ import io.dropwizard.setup.Environment;
 public class HelloWorldApplication extends Application<HelloWorldConfiguration> {
 	
 	public static void main(String[] args) throws Exception {
-		new HelloWorldApplication().run("server", "hello-world.yml");
+		start();
 	}
 	
 	@Override
@@ -39,5 +39,9 @@ public class HelloWorldApplication extends Application<HelloWorldConfiguration> 
 		environment.jersey().register(helloWorldResource);
 		environment.jersey().register(testResource);
 		environment.jersey().register(instanceResource);
+	}
+	
+	public static void start() throws Exception {
+		new HelloWorldApplication().run("server", "hello-world.yml");
 	}
 }
