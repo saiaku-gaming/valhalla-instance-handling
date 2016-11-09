@@ -24,6 +24,6 @@ public abstract class BaseIntegrationTest {
 	
 	@AfterClass
 	public static void tearDown() throws Exception {
-		System.exit(1);
+		System.exit(0);
 	}
 }

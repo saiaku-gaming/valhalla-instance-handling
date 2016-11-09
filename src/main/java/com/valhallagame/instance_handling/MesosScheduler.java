@@ -52,7 +52,7 @@ public class MesosScheduler implements Closeable {
 	public static final String MESOS_MASTER = "http://mesos-master.valhalla-game.com:5050";
 	private static final String MESOS_MASTER_SCHEDULER = MESOS_MASTER + "/api/v1/scheduler";
 	private static final URI MESOS_MASTER_S_URI = URI.create(MESOS_MASTER_SCHEDULER);
-	private static final String FRAMEWORK = "valhalla1";
+	private static final String FRAMEWORK = "valhallaMesosFramework";
 	private static final double CPUS_PER_INSTANCE = 1;
 	private static final String MESOS_ROLE = "*";
 	private static final double MB_RAM_PER_INSTANCE = 240;
@@ -75,7 +75,7 @@ public class MesosScheduler implements Closeable {
 
 		FrameworkInfo frameworkInfo = Protos.FrameworkInfo.newBuilder().setId(stateObject.getFwId())
 				.setUser(Optional.ofNullable(System.getenv("user")).orElse("root")) // https://issues.apache.org/jira/browse/MESOS-3747
-				.setName(FRAMEWORK).setFailoverTimeout(0).setRole(stateObject.getResourceRole()).build();
+				.setName(FRAMEWORK).setFailoverTimeout(300D).setRole(stateObject.getResourceRole()).build();
 
 		final Call subscribeCall = subscribe(stateObject.getFwId(), frameworkInfo);
 
@@ -97,11 +97,7 @@ public class MesosScheduler implements Closeable {
 						final State<FrameworkID, TaskID, TaskState> state = t._2;
 						final TaskStatus status = event.getUpdate().getStatus();
 						state.put(status.getTaskId(), status.getState());
-					}).map((Pair<Event, State<FrameworkID, TaskID, TaskState>> t) -> {
-						final TaskStatus status = t._1.getUpdate().getStatus();
-						return SchedulerCalls.ackUpdate(t._2.getFwId(), status.getUuid(), status.getAgentId(),
-								status.getTaskId());
-					}).map(SinkOperations::create).map(Optional::of);
+					}).map(this::handleUpdate).map(Optional::of);
 
 			final Observable<Optional<SinkOperation<Call>>> errorLogger = events
 					.filter(event -> event.getType() == Event.Type.ERROR || (event.getType() == Event.Type.UPDATE
@@ -120,6 +116,12 @@ public class MesosScheduler implements Closeable {
 		}
 	}
 
+	private SinkOperation<Call> handleUpdate(final Pair<Event, State<FrameworkID, TaskID, TaskState>> t) {
+		final TaskStatus status = t._1.getUpdate().getStatus();
+		return SinkOperations.create(SchedulerCalls.ackUpdate(t._2.getFwId(), status.getUuid(), status.getAgentId(),
+				status.getTaskId()));
+	}
+	
 	private SinkOperation<Call> handleOffer(final Pair<Offer, State<FrameworkID, TaskID, TaskState>> t) {
 		final Offer offer = t._1;
 		final State<FrameworkID, TaskID, TaskState> state = t._2;
