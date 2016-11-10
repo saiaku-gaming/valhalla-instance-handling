@@ -3,8 +3,8 @@ defaultName: Stranger
 
 database:
     driverClass: org.postgresql.Driver
-    user: test
-    url: jdbc:postgresql://127.0.0.1/test
+    user: valhalla
+    url: jdbc:postgresql://127.0.0.1/valhalla_instance
     properties:
         charSet: UTF-8
     maxWaitForConnection: 1s
