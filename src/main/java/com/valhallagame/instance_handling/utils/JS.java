@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling;
+package com.valhallagame.instance_handling.utils;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;

@@ -1,9 +1,8 @@
-package com.valhallagame.instance_handling;
+package com.valhallagame.instance_handling.instance;
 
 import java.io.Closeable;
 import java.io.IOException;
 
-import org.glassfish.jersey.process.internal.RequestScope.Instance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +36,7 @@ public class InstanceHandler implements Closeable {
 		//TODO: implement this.
 	}
 
-	public void queue(TestInstance ins) {
+	public void queue(Instance ins) {
 		framework.queueInstance(ins);
 	}
 

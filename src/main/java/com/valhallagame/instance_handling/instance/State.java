@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling;
+package com.valhallagame.instance_handling.instance;
 
 import static com.mesosphere.mesos.rx.java.protobuf.ProtoUtils.protoToString;
 

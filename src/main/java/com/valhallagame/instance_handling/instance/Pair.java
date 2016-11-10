@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling;
+package com.valhallagame.instance_handling.instance;
 
 final class Pair<T1, T2> {
 	public final T1 _1;

@@ -17,7 +17,7 @@ public abstract class BaseIntegrationTest {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		HelloWorldApplication.start();
+		Main.start();
 		Client c = ClientBuilder.newClient();
 		target = c.target("http://localhost:8080");
 	}

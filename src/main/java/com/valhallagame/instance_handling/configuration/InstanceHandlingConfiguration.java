@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling;
+package com.valhallagame.instance_handling.configuration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 
-public class HelloWorldConfiguration extends Configuration {
+public class InstanceHandlingConfiguration extends Configuration {
 	
 	@NotEmpty
 	private String template;

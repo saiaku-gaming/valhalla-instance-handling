@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling;
+package com.valhallagame.instance_handling.instance;
 
 import static com.mesosphere.mesos.rx.java.SinkOperations.sink;
 import static com.mesosphere.mesos.rx.java.protobuf.SchedulerCalls.decline;
@@ -59,7 +59,7 @@ public class MesosScheduler implements Closeable {
 
 	private static final Logger log = LoggerFactory.getLogger(MesosScheduler.class);
 
-	private List<TestInstance> instanceQueue = Collections.synchronizedList(new ArrayList<TestInstance>());
+	private List<Instance> instanceQueue = Collections.synchronizedList(new ArrayList<Instance>());
 	private AwaitableSubscription openStream;
 	private Thread subscriberThread;
 
@@ -147,7 +147,7 @@ public class MesosScheduler implements Closeable {
 				final double cpusPerTask = state.getCpusPerTask();
 				final double memMbPerTask = state.getMemMbPerTask();
 				if (availableCpu >= cpusPerTask && availableMem >= memMbPerTask && port != 0l) {
-					TestInstance instance = instanceQueue.remove(0);
+					Instance instance = instanceQueue.remove(0);
 					tasks.add(runValhallaInstance(agentId, instance, cpus.getRole(), cpusPerTask, mem.getRole(),
 							memMbPerTask, port));
 				}
@@ -177,7 +177,7 @@ public class MesosScheduler implements Closeable {
 				.build();
 	}
 
-	private TaskInfo runValhallaInstance(final AgentID agentId, final TestInstance instance, final String cpusRole,
+	private TaskInfo runValhallaInstance(final AgentID agentId, final Instance instance, final String cpusRole,
 			final double cpus, final String memRole, final double mem, final int portNumber) {
 
 		// generate a unique task ID
@@ -231,7 +231,7 @@ public class MesosScheduler implements Closeable {
 				.build();
 	}
 
-	public void queueInstance(TestInstance ins) {
+	public void queueInstance(Instance ins) {
 		this.instanceQueue.add(ins);
 		if (openStream == null || openStream.isUnsubscribed()) {
 

@@ -1,11 +1,11 @@
-package com.valhallagame.instance_handling;
+package com.valhallagame.instance_handling.instance;
 
 import java.time.Instant;
 import java.util.Random;
 import java.util.UUID;
 
 
-public class TestInstance {
+public class Instance {
 	
 	private int id;
 	private String taskId;
@@ -16,7 +16,7 @@ public class TestInstance {
 	private Instant serverCallbackTimestamp;
 	private boolean ready;
 	
-	public TestInstance(String level, String version, String persistentServerUrl) {
+	public Instance(String level, String version, String persistentServerUrl) {
 		// this is not how ids should be set butt-fuck-it
 		this.id = new Random().nextInt();
 		this.level = level;

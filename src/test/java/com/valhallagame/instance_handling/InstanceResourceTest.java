@@ -5,6 +5,9 @@ import javax.ws.rs.core.Response;
 
 import org.junit.Test;
 
+import com.valhallagame.instance_handling.instance.InstanceHandler;
+import com.valhallagame.instance_handling.messages.InstanceStart;
+
 import junit.framework.Assert;
 
 public class InstanceResourceTest extends BaseIntegrationTest {

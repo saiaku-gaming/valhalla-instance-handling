@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling;
+package com.valhallagame.instance_handling.healthcheck;
 
 import com.codahale.metrics.health.HealthCheck;
 
