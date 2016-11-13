@@ -13,7 +13,7 @@ public class InstanceHandler implements Closeable {
 	
 	private static InstanceHandler instanceHandler = new InstanceHandler();
 
-	private MesosScheduler framework;
+	private InstanceMesosClient framework;
 	
 	private boolean closed;
 
@@ -22,7 +22,7 @@ public class InstanceHandler implements Closeable {
 	}
 
 	private InstanceHandler() {
-		framework = new MesosScheduler();
+		framework = new InstanceMesosClient();
 	};
 
 	public static InstanceHandler getInstanceHandler() {
@@ -33,14 +33,12 @@ public class InstanceHandler implements Closeable {
 	}
 
 	public void kill(Instance instance) {
-		//TODO: implement this.
+		framework.kill(instance);
 	}
 
 	public void queue(Instance ins) {
 		framework.queueInstance(ins);
 	}
-
-
 
 	@Override
 	public void close() {
