@@ -148,8 +148,7 @@ public class MesosScheduler implements Closeable {
 				final double memMbPerTask = state.getMemMbPerTask();
 				if (availableCpu >= cpusPerTask && availableMem >= memMbPerTask && port != 0l) {
 					Instance instance = instanceQueue.remove(0);
-					tasks.add(runValhallaInstance(agentId, instance, cpus.getRole(), cpusPerTask, mem.getRole(),
-							memMbPerTask, port));
+					tasks.add(runValhallaInstance(agentId, instance, port));
 				}
 
 			}
@@ -177,8 +176,7 @@ public class MesosScheduler implements Closeable {
 				.build();
 	}
 
-	private TaskInfo runValhallaInstance(final AgentID agentId, final Instance instance, final String cpusRole,
-			final double cpus, final String memRole, final double mem, final int portNumber) {
+	private static TaskInfo runValhallaInstance(final AgentID agentId, final Instance instance, final int portNumber) {
 
 		// generate a unique task ID
 		Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(instance.getTaskId()).build();

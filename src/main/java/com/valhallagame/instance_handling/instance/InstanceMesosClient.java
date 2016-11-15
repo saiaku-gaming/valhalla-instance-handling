@@ -179,7 +179,7 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 	/**
 	 * Creates a task based on instance data that is used to tell mesos what to run.
 	 */
-	private TaskInfo createValhallaTaskInfo(final AgentID agentId, final Instance instance, final int portNumber) {
+	private static TaskInfo createValhallaTaskInfo(final AgentID agentId, final Instance instance, final int portNumber) {
 
 		// generate a unique task ID
 		Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(instance.getTaskId()).build();
