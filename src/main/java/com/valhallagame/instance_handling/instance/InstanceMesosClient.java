@@ -168,7 +168,7 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 					.orElse(0L).intValue();
 			double availableCpu = cpus.getScalar().getValue();
 			double availableMem = mem.getScalar().getValue();
-			if (availableCpu >= CPUS_PER_INSTANCE && availableMem >= MB_RAM_PER_INSTANCE && port != 0l) {
+			if (availableCpu >= CPUS_PER_INSTANCE && availableMem >= MB_RAM_PER_INSTANCE && port != 0) {
 				Instance instance = instanceQueue.remove(0);
 				return Optional.of(createValhallaTaskInfo(agentId, instance, port));
 			}
