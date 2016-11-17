@@ -164,8 +164,8 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 			
 			final Resource cpus = cpuList.get(0);
 			final Resource mem = memList.get(0);
-			int port = (int) ports.get(0).getRanges().getRangeList().stream().findAny().map(range -> range.getBegin())
-					.orElse(0l).longValue();
+			int port = ports.get(0).getRanges().getRangeList().stream().findAny().map(range -> range.getBegin())
+					.orElse(0L).intValue();
 			double availableCpu = cpus.getScalar().getValue();
 			double availableMem = mem.getScalar().getValue();
 			if (availableCpu >= CPUS_PER_INSTANCE && availableMem >= MB_RAM_PER_INSTANCE && port != 0l) {
