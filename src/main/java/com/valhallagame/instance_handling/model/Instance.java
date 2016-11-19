@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling.instance;
+package com.valhallagame.instance_handling.model;
 
 import java.time.Instant;
 import java.util.Random;

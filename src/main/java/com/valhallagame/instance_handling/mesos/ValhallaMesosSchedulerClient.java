@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling.instance;
+package com.valhallagame.instance_handling.mesos;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -27,14 +27,17 @@ import org.apache.mesos.v1.Protos.TaskStatus;
 import org.apache.mesos.v1.scheduler.Protos.Event.Failure;
 import org.apache.mesos.v1.scheduler.Protos.Event.Message;
 import org.apache.mesos.v1.scheduler.Protos.Event.Subscribed;
+import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.valhallagame.instance_handling.model.Instance;
 import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
 
-public class InstanceMesosClient extends MesosSchedulerClient {
+@Service
+public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
-	private static final Logger log = LoggerFactory.getLogger(MesosScheduler.class);
+	private static final Logger log = LoggerFactory.getLogger(ValhallaMesosSchedulerClient.class);
 
 	private static final double CPUS_PER_INSTANCE = 0;
 
@@ -42,7 +45,7 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 
 	private List<Instance> instanceQueue = Collections.synchronizedList(new ArrayList<Instance>());
 
-	public InstanceMesosClient() {
+	public ValhallaMesosSchedulerClient() {
 		try {
 			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), "Valhalla");
 		} catch (MalformedURLException | URISyntaxException e) {
@@ -54,13 +57,12 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 		this.instanceQueue.add(ins);
 	}
 
-	
 	@Override
 	public void receivedSubscribed(Subscribed subscribed) {
 		log.info("Whoho, I am subscribed!");
 	}
-	
-	public void kill(Instance instance){
+
+	public void kill(Instance instance) {
 		this.kill(TaskID.newBuilder().setValue(instance.getTaskId()).build());
 	}
 
@@ -73,10 +75,10 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 
 		for (Offer offer : offers) {
 			final OfferID offerId = offer.getId();
-			
-			//Gets a task if needed and offer contains enough resources.
+
+			// Gets a task if needed and offer contains enough resources.
 			Optional<TaskInfo> taskInfo = getTask(offer);
-			
+
 			if (taskInfo.isPresent()) {
 				acceptedOffers.add(offerId);
 				tasksInfos.add(taskInfo.get());
@@ -98,24 +100,22 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 		}
 	}
 
-
-
 	@Override
 	public void receivedInverseOffers(List<InverseOffer> offers) {
-		//we dont care, we have already tried to respond to offer
+		// we dont care, we have already tried to respond to offer
 		List<String> s = offers.stream().map(f -> f.toString()).collect(Collectors.toList());
 		log.info("Rescind InverseOffer " + String.join(", ", s));
 	}
 
 	@Override
 	public void receivedRescind(OfferID offerId) {
-		//we dont care, we have already tried to respond to offer
+		// we dont care, we have already tried to respond to offer
 		log.info("Rescind Offer " + offerId);
 	}
 
 	@Override
 	public void receivedRescindInverseOffer(OfferID offerId) {
-		//we dont care, we have already tried to respond to offer
+		// we dont care, we have already tried to respond to offer
 		log.info("Rescind Inverse Offer " + offerId);
 	}
 
@@ -143,14 +143,13 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 	public void receivedHeartbeat() {
 		log.debug("Heartbead received.");
 	}
-	
-	
+
 	/**
 	 * Returns a valhalla task if there is enough resources and there is a
 	 * instance queued up.
 	 */
 	private Optional<TaskInfo> getTask(Offer offer) {
-		
+
 		final AgentID agentId = offer.getAgentId();
 		final Map<String, List<Resource>> resources = offer.getResourcesList().stream()
 				.collect(groupingBy(Resource::getName));
@@ -158,10 +157,10 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 		final List<Resource> cpuList = resources.get("cpus");
 		final List<Resource> memList = resources.get("mem");
 		final List<Resource> ports = resources.get("ports");
-		
+
 		if (cpuList != null && !cpuList.isEmpty() && memList != null && !memList.isEmpty()
 				&& cpuList.size() == memList.size() && instanceQueue.size() > 0) {
-			
+
 			final Resource cpus = cpuList.get(0);
 			final Resource mem = memList.get(0);
 			int port = ports.get(0).getRanges().getRangeList().stream().findAny().map(range -> range.getBegin())
@@ -177,9 +176,11 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 	}
 
 	/**
-	 * Creates a task based on instance data that is used to tell mesos what to run.
+	 * Creates a task based on instance data that is used to tell mesos what to
+	 * run.
 	 */
-	private static TaskInfo createValhallaTaskInfo(final AgentID agentId, final Instance instance, final int portNumber) {
+	private static TaskInfo createValhallaTaskInfo(final AgentID agentId, final Instance instance,
+			final int portNumber) {
 
 		// generate a unique task ID
 		Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(instance.getTaskId()).build();
@@ -207,7 +208,8 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 		containerInfoBuilder.setDocker(dockerInfoBuilder.build());
 
 		// Will replace a file on the instance so that the instance know
-		// its instance id and where to call home. This is run on the docker container as soon as it starts.
+		// its instance id and where to call home. This is run on the docker
+		// container as soon as it starts.
 		String pre = String
 				.format("sed -i 's/DEVELOPMENT_INSTANCE/%s/g' /opt/unreal-server/valhalla/Config/DefaultGame.ini && "
 						+ " sed -i 's/SERVER_SECRET/%s/g' /opt/unreal-server/valhalla/Config/DefaultGame.ini && "
@@ -215,7 +217,7 @@ public class InstanceMesosClient extends MesosSchedulerClient {
 
 						instance.getId(), System.getProperty("valhalla.server.secret"),
 						instance.getPersistentServerUrl());
-		
+
 		log.info("pre: " + pre);
 
 		// create task to run

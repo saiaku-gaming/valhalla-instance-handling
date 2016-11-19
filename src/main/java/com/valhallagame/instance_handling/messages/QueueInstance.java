@@ -1,12 +1,12 @@
 package com.valhallagame.instance_handling.messages;
 
-public class InstanceStart {
+public class QueueInstance {
 
-	public InstanceStart() {
+	public QueueInstance() {
 		// json constr;
 	}
 
-	public InstanceStart(String level, String version, String persistentServerUrl) {
+	public QueueInstance(String level, String version, String persistentServerUrl) {
 		this.level = level;
 		this.version = version;
 		this.persistentServerUrl = persistentServerUrl;

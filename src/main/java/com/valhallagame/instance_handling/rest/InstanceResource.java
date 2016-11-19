@@ -1,5 +1,6 @@
 package com.valhallagame.instance_handling.rest;
 
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -8,20 +9,53 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import com.codahale.metrics.annotation.Timed;
-import com.valhallagame.instance_handling.instance.Instance;
-import com.valhallagame.instance_handling.instance.InstanceHandler;
-import com.valhallagame.instance_handling.messages.InstanceStart;
+import com.valhallagame.instance_handling.messages.InstanceParameter;
+import com.valhallagame.instance_handling.messages.QueueInstance;
+import com.valhallagame.instance_handling.model.Instance;
+import com.valhallagame.instance_handling.service.MesosService;
+import com.valhallagame.instance_handling.services.InstanceService;
 import com.valhallagame.instance_handling.utils.JS;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 @Path("/v1/instance-resource")
 @Produces(MediaType.APPLICATION_JSON)
+@Api(value = "InstanceQueueHandling")
 public class InstanceResource {
-	
+
+	@Inject
+	MesosService mesosService;
+
+	@Inject
+	InstanceService instanceService;
+
 	@POST
 	@Timed
-	@Path("start")
-	public Response start2(InstanceStart instanceStart) {
-		InstanceHandler.getInstanceHandler().queue(new Instance(instanceStart.level, instanceStart.version, instanceStart.persistentServerUrl));
-		return JS.message(Status.OK, "Server started");
+	@Path("queue-instance")
+	@ApiOperation(value = "Queues an instance.")
+	public Response start(QueueInstance i) {
+		mesosService.queue(new Instance(i.level, i.version, i.persistentServerUrl));
+		return JS.message(Status.OK, "Instance queued");
 	}
+
+	@POST
+	@Timed
+	@Path("kill-instance")
+	@ApiOperation(value = "Kills an instance without any checks. Pure killing!")
+	public Response killInstance(InstanceParameter instanceParameter) {
+		Instance instance = instanceService.getInstance(instanceParameter.getInstanceId());
+		mesosService.kill(instance);
+		return JS.message(Status.OK, "It died");
+	}
+
+	@POST
+	@Timed
+	@Path("remove-instance")
+	@ApiOperation(value = "Carefully removes an instance.", notes = "Makes sure player count is zero and waits a minute to kill so that no one is currently connecting.")
+	public Response removeInstance(InstanceParameter instance) {
+		instanceService.remove(instance.getInstanceId());
+		return JS.message(Status.OK, "Instance removed.");
+	}
+
 }
