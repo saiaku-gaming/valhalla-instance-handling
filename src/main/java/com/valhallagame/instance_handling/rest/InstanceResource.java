@@ -10,10 +10,9 @@ import javax.ws.rs.core.Response.Status;
 
 import com.codahale.metrics.annotation.Timed;
 import com.valhallagame.instance_handling.messages.InstanceParameter;
-import com.valhallagame.instance_handling.messages.QueueInstance;
 import com.valhallagame.instance_handling.model.Instance;
-import com.valhallagame.instance_handling.service.MesosService;
-import com.valhallagame.instance_handling.services.InstanceService;
+import com.valhallagame.instance_handling.services.InstanceController;
+import com.valhallagame.instance_handling.services.MesosController;
 import com.valhallagame.instance_handling.utils.JS;
 
 import io.swagger.annotations.Api;
@@ -25,17 +24,17 @@ import io.swagger.annotations.ApiOperation;
 public class InstanceResource {
 
 	@Inject
-	MesosService mesosService;
+	MesosController mesosController;
 
 	@Inject
-	InstanceService instanceService;
+	InstanceController instanceController;
 
 	@POST
 	@Timed
 	@Path("queue-instance")
 	@ApiOperation(value = "Queues an instance.")
-	public Response start(QueueInstance i) {
-		mesosService.queue(new Instance(i.level, i.version, i.persistentServerUrl));
+	public Response start(Instance instance) {
+		mesosController.queue(instance);
 		return JS.message(Status.OK, "Instance queued");
 	}
 
@@ -44,8 +43,8 @@ public class InstanceResource {
 	@Path("kill-instance")
 	@ApiOperation(value = "Kills an instance without any checks. Pure killing!")
 	public Response killInstance(InstanceParameter instanceParameter) {
-		Instance instance = instanceService.getInstance(instanceParameter.getInstanceId());
-		mesosService.kill(instance);
+		Instance instance = instanceController.getInstance(instanceParameter.getInstanceId());
+		mesosController.kill(instance);
 		return JS.message(Status.OK, "It died");
 	}
 
@@ -54,7 +53,7 @@ public class InstanceResource {
 	@Path("remove-instance")
 	@ApiOperation(value = "Carefully removes an instance.", notes = "Makes sure player count is zero and waits a minute to kill so that no one is currently connecting.")
 	public Response removeInstance(InstanceParameter instance) {
-		instanceService.remove(instance.getInstanceId());
+		instanceController.remove(instance.getInstanceId());
 		return JS.message(Status.OK, "Instance removed.");
 	}
 

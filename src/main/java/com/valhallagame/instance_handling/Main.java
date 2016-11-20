@@ -1,10 +1,16 @@
 package com.valhallagame.instance_handling;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import javax.sql.DataSource;
+
+import org.flywaydb.core.Flyway;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
@@ -13,9 +19,8 @@ import org.slf4j.LoggerFactory;
 import com.valhallagame.instance_handling.configuration.InstanceHandlingConfiguration;
 import com.valhallagame.instance_handling.healthcheck.TemplateHealthCheck;
 import com.valhallagame.instance_handling.mesos.ValhallaMesosSchedulerClient;
-import com.valhallagame.instance_handling.rest.InstanceResource;
-import com.valhallagame.instance_handling.service.MesosService;
-import com.valhallagame.instance_handling.services.InstanceService;
+import com.valhallagame.instance_handling.services.InstanceController;
+import com.valhallagame.instance_handling.services.MesosController;
 
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
@@ -42,7 +47,38 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 		}
 		startRestartThread();
 
+		loadSystemProperties();
+
 		new Main().run("server", "instance-handling.yml");
+	}
+
+	private static void loadSystemProperties() {
+		// override system properties with local properties
+		// Maybe /home/valhalla should be working directory or something?
+		try (InputStream inputStream = new FileInputStream("/home/valhalla/server.properties")) {
+			System.getProperties().load(inputStream);
+		} catch (IOException e) {
+			log.error("", e);
+		}
+
+	}
+
+	private static void updateDB(DataSource dataSource) {
+		log.info("Patching database.");
+
+		// Create the Flyway instance
+		Flyway flyway = new Flyway();
+
+		// Point it to the database
+		flyway.setDataSource(dataSource);
+
+		// if debug machine
+		if (System.getProperty("valhalla.server.secret", "SERVER_SECRET").equals("SERVER_SECRET")) {
+			flyway.clean();
+		}
+
+		flyway.migrate();
+		log.info("Patching database complete.");
 	}
 
 	@Override
@@ -57,17 +93,18 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 
 	@Override
 	public void run(InstanceHandlingConfiguration configuration, Environment environment) {
-		final DBIFactory factory = new DBIFactory();
-		final DBI jdbi = factory.build(environment, configuration.getDatabase(), "postgresql");
+		updateDB(configuration.getDatabase().build(environment.metrics(), "postgresql"));
 
-		final InstanceResource instanceResource = new InstanceResource();
+		final DBIFactory factory = new DBIFactory();
+
+		final DBI jdbi = factory.build(environment, configuration.getDatabase(), "postgresql");
 
 		setupDependencyInjection(environment.jersey());
 
 		final TemplateHealthCheck healthCheck = new TemplateHealthCheck(configuration.getTemplate());
 
 		environment.healthChecks().register("template", healthCheck);
-		environment.jersey().register(instanceResource);
+		environment.jersey().getResourceConfig().packages("com.valhallagame.persistent");
 
 	}
 
@@ -96,14 +133,14 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 		env.register(new AbstractBinder() {
 			@Override
 			protected void configure() {
-				bind(InstanceService.class).to(InstanceService.class);
+				bind(InstanceController.class).to(InstanceController.class);
 			}
 		});
 
 		env.register(new AbstractBinder() {
 			@Override
 			protected void configure() {
-				bind(MesosService.class).to(MesosService.class);
+				bind(MesosController.class).to(MesosController.class);
 			}
 		});
 

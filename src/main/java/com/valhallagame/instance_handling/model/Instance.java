@@ -1,12 +1,10 @@
 package com.valhallagame.instance_handling.model;
 
 import java.time.Instant;
-import java.util.Random;
 import java.util.UUID;
 
-
 public class Instance {
-	
+
 	private int id;
 	private String taskId;
 	private String version;
@@ -15,10 +13,9 @@ public class Instance {
 	private Instant timestamp;
 	private Instant serverCallbackTimestamp;
 	private boolean ready;
-	
-	public Instance(String level, String version, String persistentServerUrl) {
-		// this is not how ids should be set butt-fuck-it
-		this.id = new Random().nextInt();
+
+	public Instance(int id, String level, String version, String persistentServerUrl) {
+		this.id = id;
 		this.level = level;
 		this.version = version;
 		this.timestamp = Instant.now();
@@ -27,7 +24,7 @@ public class Instance {
 		this.persistentServerUrl = persistentServerUrl;
 		this.ready = false;
 	}
-	
+
 	public String getVersion() {
 		return version;
 	}
@@ -51,7 +48,7 @@ public class Instance {
 	public void setTaskId(String taskId) {
 		this.taskId = taskId;
 	}
-	
+
 	public String getPersistentServerUrl() {
 		return persistentServerUrl;
 	}

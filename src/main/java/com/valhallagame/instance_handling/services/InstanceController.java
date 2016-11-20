@@ -11,7 +11,7 @@ import com.valhallagame.instance_handling.model.Instance;
  *
  */
 @Service
-public class InstanceService {
+public class InstanceController {
 
 	public Instance getInstance(int instanceId) {
 		// TODO Auto-generated method stub
