@@ -48,6 +48,7 @@ public class InstanceResource {
 		return JS.message(Status.OK, "It died");
 	}
 
+	//not needed?
 	@POST
 	@Timed
 	@Path("remove-instance")

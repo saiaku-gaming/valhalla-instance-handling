@@ -1,0 +1,8 @@
+BEGIN;
+
+CREATE TABLE mesos_framework (
+	id INTEGER NOT NULL,
+	ts TIMESTAMP NOT NULL DEFAULT now()
+);
+
+COMMIT;

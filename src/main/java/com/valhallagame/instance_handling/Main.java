@@ -105,7 +105,6 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 
 		environment.healthChecks().register("template", healthCheck);
 		environment.jersey().getResourceConfig().packages("com.valhallagame.persistent");
-
 	}
 
 	private static void startRestartThread() {
