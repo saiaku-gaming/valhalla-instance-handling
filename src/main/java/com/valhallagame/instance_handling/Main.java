@@ -11,13 +11,13 @@ import java.net.Socket;
 import javax.sql.DataSource;
 
 import org.flywaydb.core.Flyway;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.valhallagame.instance_handling.configuration.InstanceHandlingConfiguration;
 import com.valhallagame.instance_handling.dao.InstanceDAO;
+import com.valhallagame.instance_handling.dao.MesosDAO;
 import com.valhallagame.instance_handling.handlers.InstanceHandler;
 import com.valhallagame.instance_handling.handlers.MesosHandler;
 import com.valhallagame.instance_handling.healthcheck.TemplateHealthCheck;
@@ -26,7 +26,6 @@ import com.valhallagame.instance_handling.rest.InstanceResource;
 
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
-import io.dropwizard.jersey.setup.JerseyEnvironment;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
@@ -101,7 +100,7 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 
 		final DBI jdbi = factory.build(environment, configuration.getDatabase(), "postgresql");
 
-		setupDependencyInjection(environment.jersey());
+//		setupDependencyInjection(environment.jersey());
 
 		registerHealthchecks(environment, configuration);
 		
@@ -129,28 +128,28 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 		}.start();
 	}
 
-	private static void setupDependencyInjection(JerseyEnvironment env) {
-		env.register(new AbstractBinder() {
-			@Override
-			protected void configure() {
-				bind(InstanceHandler.class).to(InstanceHandler.class);
-			}
-		});
-
-		env.register(new AbstractBinder() {
-			@Override
-			protected void configure() {
-				bind(MesosHandler.class).to(MesosHandler.class);
-			}
-		});
-
-		env.register(new AbstractBinder() {
-			@Override
-			protected void configure() {
-				bind(new ValhallaMesosSchedulerClient()).to(ValhallaMesosSchedulerClient.class);
-			}
-		});
-	}
+//	private static void setupDependencyInjection(JerseyEnvironment env) {
+//		env.register(new AbstractBinder() {
+//			@Override
+//			protected void configure() {
+//				bind(InstanceHandler.class).to(InstanceHandler.class);
+//			}
+//		});
+//
+//		env.register(new AbstractBinder() {
+//			@Override
+//			protected void configure() {
+//				bind(MesosHandler.class).to(MesosHandler.class);
+//			}
+//		});
+//
+//		env.register(new AbstractBinder() {
+//			@Override
+//			protected void configure() {
+//				bind(new ValhallaMesosSchedulerClient()).to(ValhallaMesosSchedulerClient.class);
+//			}
+//		});
+//	}
 	
 	private static void registerHealthchecks(Environment environment, InstanceHandlingConfiguration configuration) {
 		
@@ -162,8 +161,14 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 	private static void registerResources(Environment environment, DBI jdbi) {
 		
 		final InstanceDAO instanceDAO = jdbi.onDemand(InstanceDAO.class);
+		final MesosDAO mesosDAO = jdbi.onDemand(MesosDAO.class);
 		
-		environment.jersey().register(new InstanceResource(instanceDAO));
+		final ValhallaMesosSchedulerClient valhallaMesosSchedulerClient = new ValhallaMesosSchedulerClient();
+		
+		final InstanceHandler instanceHandler = new InstanceHandler(instanceDAO);
+		final MesosHandler mesosHandler = new MesosHandler(valhallaMesosSchedulerClient, mesosDAO);
+		
+		environment.jersey().register(new InstanceResource(instanceHandler, mesosHandler));
 	}
 
 }
