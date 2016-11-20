@@ -52,7 +52,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		this.mesosHandler = mesosHandler;
 		
 		try {
-			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), "Valhalla", mesosHandler.getLatestValidFrameworkId(failoverTimeout));
+			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), failoverTimeout,
+					"Valhalla", mesosHandler.getLatestValidFrameworkId(failoverTimeout));
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
 		}
