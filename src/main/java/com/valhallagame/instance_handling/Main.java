@@ -17,8 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.valhallagame.instance_handling.configuration.InstanceHandlingConfiguration;
+import com.valhallagame.instance_handling.dao.InstanceDAO;
 import com.valhallagame.instance_handling.healthcheck.TemplateHealthCheck;
 import com.valhallagame.instance_handling.mesos.ValhallaMesosSchedulerClient;
+import com.valhallagame.instance_handling.rest.InstanceResource;
 import com.valhallagame.instance_handling.services.InstanceController;
 import com.valhallagame.instance_handling.services.MesosController;
 
@@ -101,10 +103,9 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 
 		setupDependencyInjection(environment.jersey());
 
-		final TemplateHealthCheck healthCheck = new TemplateHealthCheck(configuration.getTemplate());
-
-		environment.healthChecks().register("template", healthCheck);
-		environment.jersey().getResourceConfig().packages("com.valhallagame.persistent");
+		registerHealthchecks(environment, configuration);
+		
+		registerResources(environment, jdbi);
 	}
 
 	private static void startRestartThread() {
@@ -149,6 +150,20 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 				bind(new ValhallaMesosSchedulerClient()).to(ValhallaMesosSchedulerClient.class);
 			}
 		});
+	}
+	
+	private static void registerHealthchecks(Environment environment, InstanceHandlingConfiguration configuration) {
+		
+		final TemplateHealthCheck templateHealthCheck = new TemplateHealthCheck(configuration.getTemplate());
+
+		environment.healthChecks().register("template", templateHealthCheck);
+	}
+	
+	private static void registerResources(Environment environment, DBI jdbi) {
+		
+		final InstanceDAO instanceDAO = jdbi.onDemand(InstanceDAO.class);
+		
+		environment.jersey().register(new InstanceResource(instanceDAO));
 	}
 
 }

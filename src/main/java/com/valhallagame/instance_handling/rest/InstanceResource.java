@@ -9,6 +9,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import com.codahale.metrics.annotation.Timed;
+import com.valhallagame.instance_handling.dao.InstanceDAO;
 import com.valhallagame.instance_handling.messages.InstanceParameter;
 import com.valhallagame.instance_handling.model.Instance;
 import com.valhallagame.instance_handling.services.InstanceController;
@@ -23,6 +24,12 @@ import io.swagger.annotations.ApiOperation;
 @Api(value = "InstanceQueueHandling")
 public class InstanceResource {
 
+	private InstanceDAO instanceDAO;
+	
+	public InstanceResource(InstanceDAO instanceDAO) {
+		this.instanceDAO = instanceDAO;
+	}
+	
 	@Inject
 	MesosController mesosController;
 
