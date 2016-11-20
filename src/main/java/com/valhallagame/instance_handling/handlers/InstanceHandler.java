@@ -1,4 +1,4 @@
-package com.valhallagame.instance_handling.services;
+package com.valhallagame.instance_handling.handlers;
 
 import org.jvnet.hk2.annotations.Service;
 
@@ -11,7 +11,7 @@ import com.valhallagame.instance_handling.model.Instance;
  *
  */
 @Service
-public class InstanceController {
+public class InstanceHandler {
 
 	public Instance getInstance(int instanceId) {
 		// TODO Auto-generated method stub

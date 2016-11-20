@@ -1,11 +1,11 @@
-package com.valhallagame.instance_handling.services;
+package com.valhallagame.instance_handling.handlers;
 
 import javax.inject.Inject;
 
 import com.valhallagame.instance_handling.mesos.ValhallaMesosSchedulerClient;
 import com.valhallagame.instance_handling.model.Instance;
 
-public class MesosController {
+public class MesosHandler {
 
 	@Inject
 	ValhallaMesosSchedulerClient client;

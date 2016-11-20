@@ -10,10 +10,10 @@ import javax.ws.rs.core.Response.Status;
 
 import com.codahale.metrics.annotation.Timed;
 import com.valhallagame.instance_handling.dao.InstanceDAO;
+import com.valhallagame.instance_handling.handlers.InstanceHandler;
+import com.valhallagame.instance_handling.handlers.MesosHandler;
 import com.valhallagame.instance_handling.messages.InstanceParameter;
 import com.valhallagame.instance_handling.model.Instance;
-import com.valhallagame.instance_handling.services.InstanceController;
-import com.valhallagame.instance_handling.services.MesosController;
 import com.valhallagame.instance_handling.utils.JS;
 
 import io.swagger.annotations.Api;
@@ -31,10 +31,10 @@ public class InstanceResource {
 	}
 	
 	@Inject
-	MesosController mesosController;
+	MesosHandler mesosController;
 
 	@Inject
-	InstanceController instanceController;
+	InstanceHandler instanceController;
 
 	@POST
 	@Timed

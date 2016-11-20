@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
 
 import com.valhallagame.instance_handling.configuration.InstanceHandlingConfiguration;
 import com.valhallagame.instance_handling.dao.InstanceDAO;
+import com.valhallagame.instance_handling.handlers.InstanceHandler;
+import com.valhallagame.instance_handling.handlers.MesosHandler;
 import com.valhallagame.instance_handling.healthcheck.TemplateHealthCheck;
 import com.valhallagame.instance_handling.mesos.ValhallaMesosSchedulerClient;
 import com.valhallagame.instance_handling.rest.InstanceResource;
-import com.valhallagame.instance_handling.services.InstanceController;
-import com.valhallagame.instance_handling.services.MesosController;
 
 import io.dropwizard.Application;
 import io.dropwizard.jdbi.DBIFactory;
@@ -133,14 +133,14 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 		env.register(new AbstractBinder() {
 			@Override
 			protected void configure() {
-				bind(InstanceController.class).to(InstanceController.class);
+				bind(InstanceHandler.class).to(InstanceHandler.class);
 			}
 		});
 
 		env.register(new AbstractBinder() {
 			@Override
 			protected void configure() {
-				bind(MesosController.class).to(MesosController.class);
+				bind(MesosHandler.class).to(MesosHandler.class);
 			}
 		});
 
