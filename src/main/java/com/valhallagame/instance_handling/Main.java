@@ -21,7 +21,6 @@ import com.valhallagame.instance_handling.dao.MesosDAO;
 import com.valhallagame.instance_handling.handlers.InstanceHandler;
 import com.valhallagame.instance_handling.handlers.MesosHandler;
 import com.valhallagame.instance_handling.healthcheck.TemplateHealthCheck;
-import com.valhallagame.instance_handling.mesos.ValhallaMesosSchedulerClient;
 import com.valhallagame.instance_handling.rest.InstanceResource;
 
 import io.dropwizard.Application;
@@ -104,7 +103,7 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 
 		registerHealthchecks(environment, configuration);
 		
-		registerResources(environment, jdbi);
+		registerResources(environment, jdbi, configuration);
 	}
 
 	private static void startRestartThread() {
@@ -158,15 +157,13 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 		environment.healthChecks().register("template", templateHealthCheck);
 	}
 	
-	private static void registerResources(Environment environment, DBI jdbi) {
+	private static void registerResources(Environment environment, DBI jdbi, InstanceHandlingConfiguration configuration) {
 		
 		final InstanceDAO instanceDAO = jdbi.onDemand(InstanceDAO.class);
 		final MesosDAO mesosDAO = jdbi.onDemand(MesosDAO.class);
 		
-		final ValhallaMesosSchedulerClient valhallaMesosSchedulerClient = new ValhallaMesosSchedulerClient();
-		
 		final InstanceHandler instanceHandler = new InstanceHandler(instanceDAO);
-		final MesosHandler mesosHandler = new MesosHandler(valhallaMesosSchedulerClient, mesosDAO);
+		final MesosHandler mesosHandler = new MesosHandler(mesosDAO, configuration.getMesos());
 		
 		environment.jersey().register(new InstanceResource(instanceHandler, mesosHandler));
 	}

@@ -31,6 +31,7 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.valhallagame.instance_handling.handlers.MesosHandler;
 import com.valhallagame.instance_handling.model.Instance;
 import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
 
@@ -44,10 +45,14 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	private static final double MB_RAM_PER_INSTANCE = 0;
 
 	private List<Instance> instanceQueue = Collections.synchronizedList(new ArrayList<Instance>());
+	
+	private MesosHandler mesosHandler;
 
-	public ValhallaMesosSchedulerClient() {
+	public ValhallaMesosSchedulerClient(MesosHandler mesosHandler, double failoverTimeout) {
+		this.mesosHandler = mesosHandler;
+		
 		try {
-			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), "Valhalla");
+			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), "Valhalla", mesosHandler.getLatestValidFrameworkId(failoverTimeout));
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
 		}
@@ -59,7 +64,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedSubscribed(Subscribed subscribed) {
-		log.info("Whoho, I am subscribed!");
+		mesosHandler.insertFrameworkId(subscribed.getFrameworkId());
+		log.info("Whoho, I am subscribed on framework id: " + subscribed.getFrameworkId());
 	}
 
 	public void kill(Instance instance) {

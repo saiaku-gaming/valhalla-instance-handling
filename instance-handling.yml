@@ -1,6 +1,9 @@
 template: Hello, %s!
 defaultName: Stranger
 
+mesos:
+    failoverTimeout: 86400
+
 database:
     driverClass: org.postgresql.Driver
     user: valhalla

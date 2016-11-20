@@ -5,9 +5,12 @@ import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 
 public interface MesosDAO {
-	@SqlUpdate("insert into mesos_framework (id) values (:id)")
+	@SqlUpdate("INSERT INTO mesos_framework (id) VALUES (:id)")
 	void insert(@Bind("id") String name);
 
-	@SqlQuery("select id from mesos_framework order by ts desc limit 1")
-	String getLatestFramework(@Bind("id") int id);
+	@SqlQuery("SELECT id FROM mesos_framework ORDER BY ts DESC LIMIT 1")
+	String getLatestFramework();
+	
+	@SqlQuery("SELECT id FROM mesos_framework WHERE EXTRACT(EPOCH FROM (now() - ts)) < :failoverTimeout ORDER BY ts DESC LIMIT 1")
+	String getLatestValidFramework(@Bind("failoverTimeout") double failoverTimeout);
 }

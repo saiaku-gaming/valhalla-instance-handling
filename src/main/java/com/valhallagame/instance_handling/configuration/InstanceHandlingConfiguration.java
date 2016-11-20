@@ -21,6 +21,10 @@ public class InstanceHandlingConfiguration extends Configuration {
 	@Valid
 	@NotNull
 	private DataSourceFactory database = new DataSourceFactory();
+	
+	@Valid
+	@NotNull
+	private MesosConfig mesos = new MesosConfig();
 
 	@JsonProperty
 	public String getTemplate() {
@@ -50,5 +54,15 @@ public class InstanceHandlingConfiguration extends Configuration {
 	@JsonProperty
 	public DataSourceFactory getDatabase() {
 		return database;
+	}
+
+	@JsonProperty
+	public MesosConfig getMesos() {
+		return mesos;
+	}
+
+	@JsonProperty
+	public void setMesos(MesosConfig mesos) {
+		this.mesos = mesos;
 	}
 }
