@@ -69,8 +69,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		log.info("Whoho, I am subscribed on framework id: " + subscribed.getFrameworkId());
 	}
 
-	public void kill(Instance instance) {
-		this.kill(TaskID.newBuilder().setValue(instance.getTaskId()).build());
+	public void kill(String taskId) {
+		this.kill(TaskID.newBuilder().setValue(taskId).build());
 	}
 
 	@Override

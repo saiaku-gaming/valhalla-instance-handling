@@ -44,8 +44,8 @@ public class InstanceResource {
 	@Path("kill-instance")
 	@ApiOperation(value = "Kills an instance without any checks. Pure killing!")
 	public Response killInstance(InstanceParameter instanceParameter) {
-		Instance instance = instanceHandler.getInstance(instanceParameter.getInstanceId());
-		mesosHandler.kill(instance);
+		String taskId = instanceHandler.getTaskId(instanceParameter.getInstanceId());
+		mesosHandler.kill(taskId);
 		return JS.message(Status.OK, "It died");
 	}
 

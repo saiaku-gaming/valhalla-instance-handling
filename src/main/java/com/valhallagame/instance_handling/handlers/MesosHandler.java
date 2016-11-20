@@ -23,8 +23,8 @@ public class MesosHandler {
 		client.queueInstance(instance);
 	}
 
-	public void kill(Instance instance) {
-		client.kill(instance);
+	public void kill(String taskId) {
+		client.kill(taskId);
 	}
 	
 	public void insertFrameworkId(FrameworkID frameworkId) {
