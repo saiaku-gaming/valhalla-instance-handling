@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.mesos.v1.Protos;
@@ -31,8 +32,9 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.valhallagame.instance_handling.handlers.InstanceHandler;
 import com.valhallagame.instance_handling.handlers.MesosHandler;
-import com.valhallagame.instance_handling.model.Instance;
+import com.valhallagame.instance_handling.messages.InstanceAdd;
 import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
 
 @Service
@@ -44,12 +46,14 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private static final double MB_RAM_PER_INSTANCE = 0;
 
-	private List<Instance> instanceQueue = Collections.synchronizedList(new ArrayList<Instance>());
+	private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 	
 	private MesosHandler mesosHandler;
+	private InstanceHandler instanceHandler;
 
-	public ValhallaMesosSchedulerClient(MesosHandler mesosHandler, double failoverTimeout) {
+	public ValhallaMesosSchedulerClient(MesosHandler mesosHandler, InstanceHandler instanceHandler, double failoverTimeout) {
 		this.mesosHandler = mesosHandler;
+		this.instanceHandler = instanceHandler;
 		
 		try {
 			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), failoverTimeout,
@@ -59,8 +63,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		}
 	}
 
-	public void queueInstance(Instance ins) {
-		this.instanceQueue.add(ins);
+	public void queueInstance(InstanceAdd instanceAdd) {
+		this.instanceQueue.add(instanceAdd);
 	}
 
 	@Override
@@ -128,6 +132,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedUpdate(TaskStatus update) {
+		instanceHandler.updateTaskState(update.getTaskId().toString(), update.getState().name());
 		log.info(update.toString());
 	}
 
@@ -175,8 +180,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			double availableCpu = cpus.getScalar().getValue();
 			double availableMem = mem.getScalar().getValue();
 			if (availableCpu >= CPUS_PER_INSTANCE && availableMem >= MB_RAM_PER_INSTANCE && port != 0) {
-				Instance instance = instanceQueue.remove(0);
-				return Optional.of(createValhallaTaskInfo(agentId, instance, port));
+				InstanceAdd instanceAdd = instanceQueue.remove(0);
+				return Optional.of(createValhallaTaskInfo(agentId, instanceAdd, port));
 			}
 		}
 		return Optional.empty();
@@ -186,17 +191,17 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	 * Creates a task based on instance data that is used to tell mesos what to
 	 * run.
 	 */
-	private static TaskInfo createValhallaTaskInfo(final AgentID agentId, final Instance instance,
+	private static TaskInfo createValhallaTaskInfo(final AgentID agentId, final InstanceAdd instanceAdd,
 			final int portNumber) {
 
 		// generate a unique task ID
-		Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(instance.getTaskId()).build();
+		Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(UUID.randomUUID().toString()).build();
 
 		log.info("Launching task {}", taskId.getValue());
 
 		// docker image info
 		Protos.ContainerInfo.DockerInfo.Builder dockerInfoBuilder = Protos.ContainerInfo.DockerInfo.newBuilder();
-		dockerInfoBuilder.setImage("phrozen/valhalla-linux-server:" + instance.getVersion());
+		dockerInfoBuilder.setImage("phrozen/valhalla-linux-server:" + instanceAdd.getVersion());
 		dockerInfoBuilder.setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE);
 
 		dockerInfoBuilder.addParameters(Protos.Parameter.newBuilder().setKey("rm").setValue("true").build());
@@ -222,8 +227,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 						+ " sed -i 's/SERVER_SECRET/%s/g' /opt/unreal-server/valhalla/Config/DefaultGame.ini && "
 						+ " sed -i 's/persistent.valhalla-game.com/%s/g' /opt/unreal-server/valhalla/Config/DefaultGame.ini ",
 
-						instance.getId(), System.getProperty("valhalla.server.secret"),
-						instance.getPersistentServerUrl());
+						instanceAdd.getInstanceId(), System.getProperty("valhalla.server.secret"),
+						instanceAdd.getPersistentServerUrl());
 
 		log.info("pre: " + pre);
 
@@ -238,7 +243,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 								.addRange(Protos.Value.Range.newBuilder().setBegin(portNumber).setEnd(portNumber))))
 				.setContainer(containerInfoBuilder)
 				.setCommand(
-						Protos.CommandInfo.newBuilder().setShell(false).setValue(instance.getLevel()).addArguments(pre))
+						Protos.CommandInfo.newBuilder().setShell(false).setValue(instanceAdd.getLevel()).addArguments(pre))
 				.build();
 	}
 

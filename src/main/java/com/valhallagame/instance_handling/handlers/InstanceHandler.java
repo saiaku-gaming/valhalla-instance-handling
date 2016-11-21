@@ -19,6 +19,14 @@ public class InstanceHandler {
 		this.dao = dao;
 	}
 
+	public void addTask(String taskId, int instanceId, String taskState) {
+		dao.addTask(taskId, instanceId, taskState);
+	}
+	
+	public void updateTaskState(String taskId, String taskState) {
+		dao.updateTaskState(taskId, taskState);
+	}
+	
 	public String getTaskId(int instanceId) {
 		return dao.getTaskId(instanceId);
 	}

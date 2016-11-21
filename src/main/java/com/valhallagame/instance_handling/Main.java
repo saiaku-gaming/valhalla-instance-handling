@@ -163,7 +163,7 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 		final MesosDAO mesosDAO = jdbi.onDemand(MesosDAO.class);
 		
 		final InstanceHandler instanceHandler = new InstanceHandler(instanceDAO);
-		final MesosHandler mesosHandler = new MesosHandler(mesosDAO, configuration.getMesos());
+		final MesosHandler mesosHandler = new MesosHandler(mesosDAO, configuration.getMesos(), instanceHandler);
 		
 		environment.jersey().register(new InstanceResource(instanceHandler, mesosHandler));
 	}

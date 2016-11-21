@@ -10,8 +10,8 @@ import javax.ws.rs.core.Response.Status;
 import com.codahale.metrics.annotation.Timed;
 import com.valhallagame.instance_handling.handlers.InstanceHandler;
 import com.valhallagame.instance_handling.handlers.MesosHandler;
+import com.valhallagame.instance_handling.messages.InstanceAdd;
 import com.valhallagame.instance_handling.messages.InstanceParameter;
-import com.valhallagame.instance_handling.model.Instance;
 import com.valhallagame.instance_handling.utils.JS;
 
 import io.swagger.annotations.Api;
@@ -34,8 +34,9 @@ public class InstanceResource {
 	@Timed
 	@Path("queue-instance")
 	@ApiOperation(value = "Queues an instance.")
-	public Response start(Instance instance) {
-		mesosHandler.queue(instance);
+	public Response start(InstanceAdd instanceAdd) {
+		mesosHandler.queue(instanceAdd);
+		instanceHandler.addTask(instanceAdd.getTaskId(), instanceAdd.getInstanceId(), null);
 		return JS.message(Status.OK, "Instance queued");
 	}
 

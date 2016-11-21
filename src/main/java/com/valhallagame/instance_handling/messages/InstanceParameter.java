@@ -7,8 +7,11 @@ import io.swagger.annotations.ApiModelProperty;
 public class InstanceParameter {
 
 	@ApiModelProperty(required = true)
-	private final int instanceId;
+	private int instanceId;
 
+	public InstanceParameter(){
+	}
+	
 	public InstanceParameter(int instanceId) {
 		this.instanceId = instanceId;
 	}
