@@ -1,0 +1,21 @@
+BEGIN;
+
+CREATE TYPE task_state AS ENUM(
+	'TASK_STAGING',
+	'TASK_STARTING',
+	'TASK_RUNNING',
+	'TASK_KILLING',
+	'TASK_FINISHED',
+	'TASK_FAILED',
+	'TASK_KILLED',
+	'TASK_LOST',
+	'TASK_ERROR'
+);
+
+CREATE TABLE task (
+	task_id TEXT NOT NULL,
+	instance_id INTEGER NOT NULL,
+	task_state task_state
+);
+
+COMMIT;

@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.mesos.v1.Protos;
@@ -132,7 +131,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedUpdate(TaskStatus update) {
-		instanceHandler.updateTaskState(update.getTaskId().toString(), update.getState().name());
+		instanceHandler.updateTaskState(update.getTaskId().getValue().toString(), update.getState().name());
 		log.info(update.toString());
 	}
 
@@ -191,11 +190,11 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	 * Creates a task based on instance data that is used to tell mesos what to
 	 * run.
 	 */
-	private static TaskInfo createValhallaTaskInfo(final AgentID agentId, final InstanceAdd instanceAdd,
+	private TaskInfo createValhallaTaskInfo(final AgentID agentId, final InstanceAdd instanceAdd,
 			final int portNumber) {
 
 		// generate a unique task ID
-		Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(UUID.randomUUID().toString()).build();
+		Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(instanceAdd.getTaskId()).build();
 
 		log.info("Launching task {}", taskId.getValue());
 
