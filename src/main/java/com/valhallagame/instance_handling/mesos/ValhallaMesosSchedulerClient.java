@@ -82,7 +82,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			log.error("dang it", e);
 		}
 		
-		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistant-url", "http://persistant.valhalla-game.com:1234"));
+		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistant-url", "http://localhost:1234"));
 		
 		try {
 			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), failoverTimeout,
@@ -287,7 +287,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 				(slave != null ? slave.hostname : "0.0.0.0"), 
 				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).get() : -1));
 		
-		Response resp = persistant.path("v1/instance-service/update").request().post(Entity.json(message));
+		Response resp = persistant.path("/v1/instance-service/update").request().header("Content-Type", "application/json")
+				.header("session", "SERVER_SECRET").post(Entity.json(message));
 		
 		if(resp.getStatus() != 200) {
 			log.error("Something went wrong on instance update to persistant, code: " + resp.getStatus());
