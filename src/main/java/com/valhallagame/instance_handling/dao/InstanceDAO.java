@@ -16,11 +16,14 @@ public interface InstanceDAO {
 	void remove(@Bind("id") int id);
 	
 	@SqlQuery("SELECT task_id FROM task WHERE instance_id = :instance_id")
-	String getTaskId(@Bind("instance_id") int instance_id);
+	String getTaskId(@Bind("instance_id") int instanceId);
 	
 	@SqlUpdate("INSERT INTO task (task_id, instance_id, task_state) VALUES (:task_id, :instance_id, cast(:task_state AS task_state))")
 	void addTask(@Bind("task_id") String taskId, @Bind("instance_id") int instanceId, @Bind("task_state") String taskState);
 	
 	@SqlUpdate("UPDATE task SET task_state=cast(:task_state AS task_state) WHERE task_id = :task_id")
 	void updateTaskState(@Bind("task_id") String taskId, @Bind("task_state") String taskState);
+	
+	@SqlQuery("SELECT instance_id FROM task WHERE task_id = :task_id")
+	int getInstanceId(@Bind("task_id") String taskId);
 }

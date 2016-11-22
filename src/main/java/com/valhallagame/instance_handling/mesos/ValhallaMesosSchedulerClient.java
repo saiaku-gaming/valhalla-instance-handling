@@ -2,6 +2,10 @@ package com.valhallagame.instance_handling.mesos;
 
 import static java.util.stream.Collectors.groupingBy;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -12,6 +16,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 
 import org.apache.mesos.v1.Protos;
 import org.apache.mesos.v1.Protos.AgentID;
@@ -31,9 +40,14 @@ import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.valhallagame.instance_handling.handlers.InstanceHandler;
 import com.valhallagame.instance_handling.handlers.MesosHandler;
 import com.valhallagame.instance_handling.messages.InstanceAdd;
+import com.valhallagame.instance_handling.messages.InstanceUpdate;
 import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
 
 @Service
@@ -47,12 +61,28 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 	
+	private ObjectMapper mapper = new ObjectMapper();
 	private MesosHandler mesosHandler;
 	private InstanceHandler instanceHandler;
+	private WebTarget persistant;
+	private URL slaveUrl;
+	private URL taskUrl;
 
 	public ValhallaMesosSchedulerClient(MesosHandler mesosHandler, InstanceHandler instanceHandler, double failoverTimeout) {
+		mapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
+		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
+		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+		
 		this.mesosHandler = mesosHandler;
 		this.instanceHandler = instanceHandler;
+		try {
+			this.slaveUrl = new URL(MesosHandler.MESOS_MASTER + "/master/slaves");
+			this.taskUrl = new URL(MesosHandler.MESOS_MASTER + "/master/tasks");
+		} catch (MalformedURLException e) {
+			log.error("dang it", e);
+		}
+		
+		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistant-url", "http://persistant.valhalla-game.com:1234"));
 		
 		try {
 			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), failoverTimeout,
@@ -132,6 +162,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	@Override
 	public void receivedUpdate(TaskStatus update) {
 		instanceHandler.updateTaskState(update.getTaskId().getValue().toString(), update.getState().name());
+		notifyPersistant(update);
 		log.info(update.toString());
 	}
 
@@ -245,5 +276,343 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 						Protos.CommandInfo.newBuilder().setShell(false).setValue(instanceAdd.getLevel()).addArguments(pre))
 				.build();
 	}
+	
+	private void notifyPersistant(TaskStatus update) {
+		
+		int instanceId = instanceHandler.getInstanceId(update.getTaskId().getValue().toString());
+		Slave slave = getSlave(update.getAgentId().getValue());
+		Task task = getTask(update.getTaskId().getValue());
+		
+		InstanceUpdate message = new InstanceUpdate(instanceId, update.getState().name(), 
+				(slave != null ? slave.hostname : "0.0.0.0"), 
+				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).get() : -1));
+		
+		Response resp = persistant.path("v1/instance-service/update").request().post(Entity.json(message));
+		
+		if(resp.getStatus() != 200) {
+			log.error("Something went wrong on instance update to persistant, code: " + resp.getStatus());
+		}
+	}
+	
+	private Slave getSlave(String agentId) {
+		
+		try {
 
+			HttpURLConnection conn = (HttpURLConnection) slaveUrl.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Accept", "application/json");
+
+			if (conn.getResponseCode() != 200) {
+				throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+			}
+
+			String data = convertStreamToString(conn.getInputStream());
+			Slaves slaves = mapper.readValue(data, Slaves.class);
+
+			conn.disconnect();
+			
+			Optional<Slave> slave = slaves.slaves.stream().filter(s -> s.id.equals(agentId)).findFirst();
+			
+			return slave.isPresent() ? slave.get() : null;
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	private Task getTask(String agentId) {
+		
+		try {
+
+			HttpURLConnection conn = (HttpURLConnection) taskUrl.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("Accept", "application/json");
+
+			if (conn.getResponseCode() != 200) {
+				throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+			}
+
+			String data = convertStreamToString(conn.getInputStream());
+			Tasks tasks = mapper.readValue(data, Tasks.class);
+
+			conn.disconnect();
+			
+			Optional<Task> task = tasks.tasks.stream().filter(t -> t.id.equals(agentId)).findFirst();
+			
+			return task.isPresent() ? task.get() : null;
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	private String convertStreamToString(java.io.InputStream is) {
+		return new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
+	}
+	
+	/****************************************
+	 * Everything below is just helper beans
+	 ****************************************/
+
+	private static class Attributes {
+
+	}
+
+	private static class Slaves {
+		List<Slave> slaves;
+
+		@Override
+		public String toString() {
+			return "Slaves [slaves=" + slaves + "]";
+		}
+	}
+
+	private static class Scalar {
+		double value;
+
+		@Override
+		public String toString() {
+			return "Scalar [value=" + value + "]";
+		}
+	}
+
+	private static class Range {
+		int begin;
+		int end;
+
+		@Override
+		public String toString() {
+			return "Range [begin=" + begin + ", end=" + end + "]";
+		}
+	}
+
+	private static class Ranges {
+		List<Range> range;
+
+		@Override
+		public String toString() {
+			return "Ranges [range=" + range + "]";
+		}
+	}
+
+	private static class ResourcesFull {
+		String name;
+		String type;
+		Scalar scalar;
+		String role;
+		Ranges ranges;
+
+		@Override
+		public String toString() {
+			return "ResourcesFull [name=" + name + ", type=" + type + ", scalar=" + scalar + ", role=" + role
+					+ ", ranges=" + ranges + "]";
+		}
+	}
+
+	private static class Slave {
+		String id;
+		String pid;
+		String hostname;
+		double registered_time;
+		double reregistered_time;
+		Resources resources;
+		Resources usedResources;
+		Resources offeredResources;
+		Resources reservedResources;
+		Resources unreservedResources;
+		Attributes attributes;
+		boolean active;
+		String version;
+		ResourcesFull reservedResourcesFull;
+		List<ResourcesFull> usedResourcesFull;
+		List<ResourcesFull> offeredResourcesFull;
+
+		@Override
+		public String toString() {
+			return "Slave [id=" + id + ", pid=" + pid + ", hostname=" + hostname + ", registered_time="
+					+ registered_time + ", reregistered_time=" + reregistered_time + ", resources=" + resources
+					+ ", usedResources=" + usedResources + ", offeredResources=" + offeredResources
+					+ ", reservedResources=" + reservedResources + ", unreservedResources=" + unreservedResources
+					+ ", attributes=" + attributes + ", active=" + active + ", version=" + version
+					+ ", reservedResourcesFull=" + reservedResourcesFull + ", usedResourcesFull=" + usedResourcesFull
+					+ ", offeredResourcesFull=" + offeredResourcesFull + "]";
+		}
+	}
+
+	private static class Resources {
+		int disk;
+		int mem;
+		int gpus;
+		int cpus;
+		String ports;
+
+		@Override
+		public String toString() {
+			return "Resources [disk=" + disk + ", mem=" + mem + ", gpus=" + gpus + ", cpus=" + cpus + ", ports=" + ports
+					+ "]";
+		}
+	}
+
+	private static class Label {
+		String key;
+		String value;
+
+		@Override
+		public String toString() {
+			return "Label [key=" + key + ", value=" + value + "]";
+		}
+	}
+
+	private static class IpAddress {
+		String ipAddress;
+
+		@Override
+		public String toString() {
+			return "IpAddress [ipAddress=" + ipAddress + "]";
+		}
+	}
+
+	private static class NetworkInfo {
+		List<IpAddress> ipAddresses;
+
+		@Override
+		public String toString() {
+			return "NetworkInfo [ipAddresses=" + ipAddresses + "]";
+		}
+	}
+
+	private static class ContainerStatus {
+		List<NetworkInfo> networkInfos;
+
+		@Override
+		public String toString() {
+			return "ContainerStatus [networkInfos=" + networkInfos + "]";
+		}
+	}
+
+	private static class State {
+		String state;
+		double timestamp;
+		List<Label> labels;
+		ContainerStatus containerStatus;
+
+		@Override
+		public String toString() {
+			return "State [state=" + state + ", timestamp=" + timestamp + ", labels=" + labels + ", containerStatus="
+					+ containerStatus + "]";
+		}
+	}
+
+	private static class Parameter {
+		String key;
+		String value;
+
+		@Override
+		public String toString() {
+			return "Parameter [key=" + key + ", value=" + value + "]";
+		}
+	}
+
+	private static class PortMapping {
+		int hostPort;
+		int containerPort;
+		String protocol;
+
+		@Override
+		public String toString() {
+			return "PortMapping [hostPort=" + hostPort + ", containerPort=" + containerPort + ", protocol=" + protocol
+					+ "]";
+		}
+	}
+
+	private static class Docker {
+		String image;
+		String network;
+		boolean privileged;
+		List<Parameter> parameters;
+		List<PortMapping> portMappings;
+		boolean forcePullImage;
+
+		@Override
+		public String toString() {
+			return "Docker [image=" + image + ", network=" + network + ", privileged=" + privileged + ", parameters="
+					+ parameters + ", portMappings=" + portMappings + ", forcePullImage=" + forcePullImage + "]";
+		}
+	}
+
+	private static class Container {
+		String type;
+		Docker docker;
+
+		@Override
+		public String toString() {
+			return "Container [type=" + type + ", docker=" + docker + "]";
+		}
+	}
+
+	private static class Port {
+		int number;
+		String protocol;
+
+		@Override
+		public String toString() {
+			return "Port [number=" + number + ", protocol=" + protocol + "]";
+		}
+	}
+
+	private static class Ports {
+		List<Port> ports;
+
+		@Override
+		public String toString() {
+			return "Ports [ports=" + ports + "]";
+		}
+	}
+
+	private static class Discovery {
+		String visibility;
+		String name;
+		Ports ports;
+
+		@Override
+		public String toString() {
+			return "Discovery [visibility=" + visibility + ", name=" + name + ", ports=" + ports + "]";
+		}
+	}
+
+	private static class Task {
+		String id;
+		String name;
+		String frameworkId;
+		String executorId;
+		String slaveId;
+		String state;
+		Resources resources;
+		List<State> statuses;
+		Discovery discovery;
+		Container container;
+
+		@Override
+		public String toString() {
+			return "Task [id=" + id + ", name=" + name + ", frameworkId=" + frameworkId + ", executorId=" + executorId
+					+ ", slaveId=" + slaveId + ", state=" + state + ", resources=" + resources + ", statuses="
+					+ statuses + ", discovery=" + discovery + ", container=" + container + "]";
+		}
+	}
+
+	private static class Tasks {
+		List<Task> tasks;
+
+		@Override
+		public String toString() {
+			return "Tasks [tasks=" + tasks + "]";
+		}
+	}
+	
 }

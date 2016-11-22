@@ -19,7 +19,7 @@ public abstract class BaseIntegrationTest {
 	public static void setUp() throws Exception {
 		Main.main(new String[] {});
 		Client c = ClientBuilder.newClient();
-		target = c.target("http://localhost:8080");
+		target = c.target("http://localhost:4321");
 	}
 
 	@AfterClass

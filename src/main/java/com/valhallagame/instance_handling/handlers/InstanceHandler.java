@@ -34,4 +34,8 @@ public class InstanceHandler {
 	public void remove(int instanceId) {
 		dao.remove(instanceId);
 	}
+	
+	public int getInstanceId(String taskId) {
+		return dao.getInstanceId(taskId);
+	}
 }

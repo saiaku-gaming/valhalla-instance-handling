@@ -32,7 +32,7 @@ public class Main extends Application<InstanceHandlingConfiguration> {
 
 	static Logger log = LoggerFactory.getLogger(Main.class);
 
-	private static final int RESTART_PORT = 55556;
+	private static final int RESTART_PORT = 55557;
 
 	public static void main(String[] args) throws Exception {
 		log.info("Running with arguments: " + String.join(",", args));

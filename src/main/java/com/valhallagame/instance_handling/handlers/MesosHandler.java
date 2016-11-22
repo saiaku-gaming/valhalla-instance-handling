@@ -10,6 +10,7 @@ import com.valhallagame.instance_handling.messages.InstanceAdd;
 
 public class MesosHandler {
 
+	public static final String MESOS_MASTER = "http://mesos-master.valhalla-game.com:5050";
 	private ValhallaMesosSchedulerClient client;
 	private MesosDAO dao;
 	
