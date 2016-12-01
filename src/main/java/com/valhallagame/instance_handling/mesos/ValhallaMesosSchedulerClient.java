@@ -85,7 +85,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url", "http://localhost:1234/valhalla"));
 		
 		try {
-			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), failoverTimeout,
+			subscribe(new URL(MesosHandler.MESOS_MASTER + "/api/v1/scheduler"), failoverTimeout,
 					"Valhalla", mesosHandler.getLatestValidFrameworkId(failoverTimeout));
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
