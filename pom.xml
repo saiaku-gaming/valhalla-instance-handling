@@ -17,10 +17,10 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.valhalla-game</groupId>
-			<artifactId>valhalla-persistent-client</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>${swagger-core-version}</version>
+        </dependency>
 		<dependency>
 			<groupId>com.valhalla-game</groupId>
 			<artifactId>mesos-scheduler-client</artifactId>
@@ -70,6 +70,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<dropwizard.version>1.0.3</dropwizard.version>
+		<swagger-core-version>1.5.9</swagger-core-version>
 	</properties>
 
 	<build>
