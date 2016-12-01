@@ -82,7 +82,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			log.error("dang it", e);
 		}
 		
-		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistant-url", "http://localhost:1234/valhalla"));
+		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url", "http://localhost:1234/valhalla"));
 		
 		try {
 			subscribe(new URL("http://mesos-master.valhalla-game.com:5050/api/v1/scheduler"), failoverTimeout,
