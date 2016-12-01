@@ -288,7 +288,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).get() : -1));
 		
 		Response resp = persistant.path("/v1/instance-service/update").request().header("Content-Type", "application/json")
-				.header("session", "SERVER_SECRET").post(Entity.json(message));
+				.header("session", System.getProperty("valhalla.server.secret")).post(Entity.json(message));
 		
 		if(resp.getStatus() != 200) {
 			log.error("Something went wrong on instance update to persistant, code: " + resp.getStatus());
