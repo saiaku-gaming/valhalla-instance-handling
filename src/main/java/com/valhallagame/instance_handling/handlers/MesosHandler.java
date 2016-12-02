@@ -10,7 +10,6 @@ import com.valhallagame.instance_handling.messages.InstanceAdd;
 
 public class MesosHandler {
 
-	private static String mesosMasterUrl;
 	private ValhallaMesosSchedulerClient client;
 	private MesosDAO dao;
 	
@@ -18,7 +17,6 @@ public class MesosHandler {
 		this.dao = dao;
 		
 		this.client = new ValhallaMesosSchedulerClient(this, instanceHandler, mesosConfig.getFailoverTimeout());
-		mesosMasterUrl = System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050");
 	}
 
 	public void queue(InstanceAdd instanceAdd) {
@@ -39,9 +37,5 @@ public class MesosHandler {
 	
 	public String getLatestValidFrameworkId(double failoverTimeout) {
 		return dao.getLatestValidFramework(failoverTimeout);
-	}
-	
-	public static String getMesosMasterUrl() {
-		return mesosMasterUrl;
 	}
 }
