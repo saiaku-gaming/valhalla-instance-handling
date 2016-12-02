@@ -76,8 +76,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		this.mesosHandler = mesosHandler;
 		this.instanceHandler = instanceHandler;
 		try {
-			this.slaveUrl = new URL(MesosHandler.MESOS_MASTER + "/master/slaves");
-			this.taskUrl = new URL(MesosHandler.MESOS_MASTER + "/master/tasks");
+			this.slaveUrl = new URL(MesosHandler.getMesosMasterUrl() + "/master/slaves");
+			this.taskUrl = new URL(MesosHandler.getMesosMasterUrl() + "/master/tasks");
 		} catch (MalformedURLException e) {
 			log.error("dang it", e);
 		}
@@ -85,7 +85,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url", "http://localhost:1234/valhalla"));
 		
 		try {
-			subscribe(new URL(MesosHandler.MESOS_MASTER + "/api/v1/scheduler"), failoverTimeout,
+			subscribe(new URL(MesosHandler.getMesosMasterUrl() + "/api/v1/scheduler"), failoverTimeout,
 					"Valhalla", mesosHandler.getLatestValidFrameworkId(failoverTimeout));
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
