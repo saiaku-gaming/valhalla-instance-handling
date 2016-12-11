@@ -24,7 +24,7 @@ public class InstanceResource {
 
 	private InstanceHandler instanceHandler;
 	private MesosHandler mesosHandler;
-	
+
 	public InstanceResource(InstanceHandler instanceHandler, MesosHandler mesosHandler) {
 		this.instanceHandler = instanceHandler;
 		this.mesosHandler = mesosHandler;
@@ -47,17 +47,7 @@ public class InstanceResource {
 	public Response killInstance(InstanceParameter instanceParameter) {
 		String taskId = instanceHandler.getTaskId(instanceParameter.getInstanceId());
 		mesosHandler.kill(taskId);
+		instanceHandler.remove(instanceParameter.getInstanceId());
 		return JS.message(Status.OK, "It died");
 	}
-
-	//not needed?
-	@POST
-	@Timed
-	@Path("remove-instance")
-	@ApiOperation(value = "Carefully removes an instance.", notes = "Makes sure player count is zero and waits a minute to kill so that no one is currently connecting.")
-	public Response removeInstance(InstanceParameter instance) {
-		instanceHandler.remove(instance.getInstanceId());
-		return JS.message(Status.OK, "Instance removed.");
-	}
-
 }
