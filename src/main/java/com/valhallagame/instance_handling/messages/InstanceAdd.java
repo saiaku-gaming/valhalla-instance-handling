@@ -5,31 +5,30 @@ import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel
 public class InstanceAdd {
-	
+
 	@ApiModelProperty(required = true)
 	private int instanceId;
-	
+
 	@ApiModelProperty(required = true)
 	private String version;
-	
+
 	@ApiModelProperty(required = true)
 	private String persistentServerUrl;
-	
+
 	@ApiModelProperty(required = true)
 	private String level;
-	
-	@ApiModelProperty(required = true)
+
+	@ApiModelProperty(required = false)
 	private String taskId;
 
-	public InstanceAdd(){
+	public InstanceAdd() {
 	}
-	
-	public InstanceAdd(int instanceId, String level, String version, String persistentServerUrl, String taskId) {
+
+	public InstanceAdd(int instanceId, String level, String version, String persistentServerUrl) {
 		this.instanceId = instanceId;
 		this.level = level;
 		this.version = version;
 		this.persistentServerUrl = persistentServerUrl;
-		this.taskId = taskId;
 	}
 
 	public int getInstanceId() {
@@ -43,12 +42,16 @@ public class InstanceAdd {
 	public String getPersistentServerUrl() {
 		return persistentServerUrl;
 	}
-	
+
 	public String getLevel() {
 		return level;
 	}
-	
+
 	public String getTaskId() {
 		return taskId;
+	}
+
+	public void setTaskId(String taskId) {
+		this.taskId = taskId;
 	}
 }

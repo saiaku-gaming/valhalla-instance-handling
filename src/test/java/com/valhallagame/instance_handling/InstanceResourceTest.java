@@ -1,7 +1,6 @@
 package com.valhallagame.instance_handling;
 
 import java.util.Random;
-import java.util.UUID;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -23,11 +22,11 @@ public class InstanceResourceTest extends BaseIntegrationTest {
 		System.out.println("response " + resp.readEntity(String.class));
 		Assert.assertEquals(200, resp.getStatus());
 	}
-	
+
 	@Test
 	public void queueAndKillInstance() {
 		int instanceId = new Random().nextInt();
-		InstanceAdd message = new InstanceAdd(instanceId, "TrialMap", "latest", "persistent.valhalla-game.com", UUID.randomUUID().toString());
+		InstanceAdd message = new InstanceAdd(instanceId, "TrialMap", "latest", "persistent.valhalla-game.com");
 		Response resp = getTarget().path("/v1/instance-resource/queue-instance").request().post(Entity.json(message));
 		System.out.println("response " + resp.readEntity(String.class));
 		Assert.assertEquals(200, resp.getStatus());
@@ -35,7 +34,7 @@ public class InstanceResourceTest extends BaseIntegrationTest {
 			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 		}
-		
+
 		InstanceParameter message2 = new InstanceParameter(instanceId);
 		resp = getTarget().path("/v1/instance-resource/kill-instance").request().post(Entity.json(message2));
 		System.out.println("response " + resp.readEntity(String.class));

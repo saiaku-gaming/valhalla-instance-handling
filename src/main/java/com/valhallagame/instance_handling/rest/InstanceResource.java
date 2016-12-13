@@ -1,5 +1,7 @@
 package com.valhallagame.instance_handling.rest;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -35,6 +37,15 @@ public class InstanceResource {
 	@Path("queue-instance")
 	@ApiOperation(value = "Queues an instance.")
 	public Response start(InstanceAdd instanceAdd) {
+
+		if (instanceAdd.getTaskId() == null || instanceAdd.getTaskId().equals("")) {
+			String taskId = "id:" + instanceAdd.getInstanceId() + ":v:" + instanceAdd.getVersion() + ":u:" + instanceAdd
+					.getPersistentServerUrl() + ":l:" + instanceAdd.getLevel() + ":" + ThreadLocalRandom.current()
+							.nextInt(
+									0, 10000);
+			instanceAdd.setTaskId(taskId);
+		}
+
 		mesosHandler.queue(instanceAdd);
 		instanceHandler.addTask(instanceAdd.getTaskId(), instanceAdd.getInstanceId(), null);
 		return JS.message(Status.OK, "Instance queued");
