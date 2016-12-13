@@ -59,7 +59,6 @@ public class InstanceResource {
 	public Response killInstance(InstanceParameter instanceParameter) {
 		String taskId = instanceHandler.getTaskId(instanceParameter.getInstanceId());
 		mesosHandler.kill(taskId);
-		instanceHandler.remove(instanceParameter.getInstanceId());
-		return JS.message(Status.OK, "It died");
+		return JS.message(Status.OK, "Scheduled for killing");
 	}
 }

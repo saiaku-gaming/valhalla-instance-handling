@@ -1,6 +1,6 @@
 package com.valhallagame.instance_handling.mesos;
 
-import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -108,6 +108,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	}
 
 	public void kill(String taskId) {
+		log.info("Killing " + taskId);
 		this.kill(TaskID.newBuilder().setValue(taskId).build());
 	}
 
@@ -188,7 +189,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedHeartbeat() {
-		log.debug("Heartbead received.");
+		log.debug("Heartbeat received.");
 	}
 
 	/**
