@@ -1,6 +1,7 @@
 package com.valhallagame.instance_handling.rest;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -37,12 +38,12 @@ public class InstanceResource {
 	@Path("queue-instance")
 	@ApiOperation(value = "Queues an instance.")
 	public Response start(InstanceAdd instanceAdd) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd HH:mm");
+		String date = sdf.format(new Date());
 
 		if (instanceAdd.getTaskId() == null || instanceAdd.getTaskId().equals("")) {
-			String taskId = "id:" + instanceAdd.getInstanceId() + ":v:" + instanceAdd.getVersion() + ":u:" + instanceAdd
-					.getPersistentServerUrl() + ":l:" + instanceAdd.getLevel() + ":" + ThreadLocalRandom.current()
-							.nextInt(
-									0, 10000);
+			String taskId = instanceAdd.getInstanceId() + " v:" + instanceAdd.getVersion() + " s:" + instanceAdd
+					.getPersistentServerUrl() + " l:" + instanceAdd.getLevel() + " t:" + date;
 			instanceAdd.setTaskId(taskId);
 		}
 
