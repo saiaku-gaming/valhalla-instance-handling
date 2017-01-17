@@ -1,6 +1,6 @@
 package com.valhallagame.instance_handling.mesos;
 
-import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	private static final double MB_RAM_PER_INSTANCE = 240.0D;
 
 	private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
-	
+
 	private ObjectMapper mapper = new ObjectMapper();
 	private MesosHandler mesosHandler;
 	private InstanceHandler instanceHandler;
@@ -68,24 +68,29 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	private URL slaveUrl;
 	private URL taskUrl;
 
-	public ValhallaMesosSchedulerClient(MesosHandler mesosHandler, InstanceHandler instanceHandler, double failoverTimeout) {
+	public ValhallaMesosSchedulerClient(MesosHandler mesosHandler, InstanceHandler instanceHandler,
+			double failoverTimeout) {
 		mapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
 		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
 		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-		
+
 		this.mesosHandler = mesosHandler;
 		this.instanceHandler = instanceHandler;
 		try {
-			this.slaveUrl = new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050") + "/master/slaves");
-			this.taskUrl = new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050") + "/master/tasks");
+			this.slaveUrl = new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050")
+					+ "/master/slaves");
+			this.taskUrl = new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050")
+					+ "/master/tasks");
 		} catch (MalformedURLException e) {
 			log.error("dang it", e);
 		}
-		
-		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url", "http://localhost:1234/valhalla"));
-		
+
+		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url",
+				"http://localhost:1234/valhalla"));
+
 		try {
-			subscribe(new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050") + "/api/v1/scheduler"), failoverTimeout,
+			subscribe(new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050")
+					+ "/api/v1/scheduler"), failoverTimeout,
 					"Valhalla", mesosHandler.getLatestValidFrameworkId(failoverTimeout));
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
@@ -103,6 +108,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	}
 
 	public void kill(String taskId) {
+		log.info("Killing " + taskId);
 		this.kill(TaskID.newBuilder().setValue(taskId).build());
 	}
 
@@ -183,7 +189,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedHeartbeat() {
-		log.debug("Heartbead received.");
+		log.debug("Heartbeat received.");
 	}
 
 	/**
@@ -221,7 +227,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	 * Creates a task based on instance data that is used to tell mesos what to
 	 * run.
 	 */
-	private TaskInfo createValhallaTaskInfo(final AgentID agentId, final InstanceAdd instanceAdd,
+	private static TaskInfo createValhallaTaskInfo(final AgentID agentId, final InstanceAdd instanceAdd,
 			final int portNumber) {
 
 		// generate a unique task ID
@@ -273,30 +279,32 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 								.addRange(Protos.Value.Range.newBuilder().setBegin(portNumber).setEnd(portNumber))))
 				.setContainer(containerInfoBuilder)
 				.setCommand(
-						Protos.CommandInfo.newBuilder().setShell(false).setValue(instanceAdd.getLevel()).addArguments(pre))
+						Protos.CommandInfo.newBuilder().setShell(false).setValue(instanceAdd.getLevel()).addArguments(
+								pre))
 				.build();
 	}
-	
+
 	private void notifyPersistant(TaskStatus update) {
-		
+
 		int instanceId = instanceHandler.getInstanceId(update.getTaskId().getValue().toString());
 		Slave slave = getSlave(update.getAgentId().getValue());
 		Task task = getTask(update.getTaskId().getValue());
-		
-		InstanceUpdate message = new InstanceUpdate(instanceId, update.getState().name(), 
-				(slave != null ? slave.hostname : "0.0.0.0"), 
+
+		InstanceUpdate message = new InstanceUpdate(instanceId, update.getState().name(),
+				(slave != null ? slave.hostname : "0.0.0.0"),
 				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).get() : -1));
-		
-		Response resp = persistant.path("/v1/instance-service/update").request().header("Content-Type", "application/json")
+
+		Response resp = persistant.path("/v1/instance-service/update").request().header("Content-Type",
+				"application/json")
 				.header("session", System.getProperty("valhalla.server.secret")).post(Entity.json(message));
-		
-		if(resp.getStatus() != 200) {
+
+		if (resp.getStatus() != 200) {
 			log.error("Something went wrong on instance update to persistant, code: " + resp.getStatus());
 		}
 	}
-	
+
 	private Slave getSlave(String agentId) {
-		
+
 		try {
 
 			HttpURLConnection conn = (HttpURLConnection) slaveUrl.openConnection();
@@ -311,21 +319,21 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			Slaves slaves = mapper.readValue(data, Slaves.class);
 
 			conn.disconnect();
-			
+
 			Optional<Slave> slave = slaves.slaves.stream().filter(s -> s.id.equals(agentId)).findFirst();
-			
+
 			return slave.isPresent() ? slave.get() : null;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return null;
 	}
-	
+
 	private Task getTask(String agentId) {
-		
+
 		try {
 
 			HttpURLConnection conn = (HttpURLConnection) taskUrl.openConnection();
@@ -340,23 +348,23 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			Tasks tasks = mapper.readValue(data, Tasks.class);
 
 			conn.disconnect();
-			
+
 			Optional<Task> task = tasks.tasks.stream().filter(t -> t.id.equals(agentId)).findFirst();
-			
+
 			return task.isPresent() ? task.get() : null;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return null;
 	}
-	
-	private String convertStreamToString(java.io.InputStream is) {
+
+	private static String convertStreamToString(java.io.InputStream is) {
 		return new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
 	}
-	
+
 	/****************************************
 	 * Everything below is just helper beans
 	 ****************************************/
@@ -615,5 +623,5 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			return "Tasks [tasks=" + tasks + "]";
 		}
 	}
-	
+
 }
