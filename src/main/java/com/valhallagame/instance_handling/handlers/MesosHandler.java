@@ -27,8 +27,8 @@ public class MesosHandler {
 		client.kill(taskId);
 	}
 	
-	public void insertFrameworkId(FrameworkID frameworkId) {
-		dao.insert(frameworkId.getValue());
+	public void upsertFrameworkId(FrameworkID frameworkId) {
+		dao.upsertFrameworkId(frameworkId.getValue());
 	}
 	
 	public String getLatestFrameworkId() {

@@ -5,8 +5,8 @@ import org.skife.jdbi.v2.sqlobject.SqlQuery;
 import org.skife.jdbi.v2.sqlobject.SqlUpdate;
 
 public interface MesosDAO {
-	@SqlUpdate("INSERT INTO mesos_framework (id) VALUES (:id)")
-	void insert(@Bind("id") String name);
+	@SqlUpdate("INSERT INTO mesos_framework (id) VALUES (:id) ON CONFLICT (id) DO UPDATE SET ts=now()")
+	void upsertFrameworkId(@Bind("id") String name);
 
 	@SqlQuery("SELECT id FROM mesos_framework ORDER BY ts DESC LIMIT 1")
 	String getLatestFramework();

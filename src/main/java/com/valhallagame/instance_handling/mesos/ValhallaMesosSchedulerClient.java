@@ -1,6 +1,6 @@
 package com.valhallagame.instance_handling.mesos;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.groupingBy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response;
 import org.apache.mesos.v1.Protos;
 import org.apache.mesos.v1.Protos.AgentID;
 import org.apache.mesos.v1.Protos.ContainerInfo.DockerInfo.PortMapping.Builder;
+import org.apache.mesos.v1.Protos.FrameworkID;
 import org.apache.mesos.v1.Protos.InverseOffer;
 import org.apache.mesos.v1.Protos.Offer;
 import org.apache.mesos.v1.Protos.Offer.Operation;
@@ -67,6 +68,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	private WebTarget persistant;
 	private URL slaveUrl;
 	private URL taskUrl;
+	private FrameworkID frameworkId;
 
 	public ValhallaMesosSchedulerClient(MesosHandler mesosHandler, InstanceHandler instanceHandler,
 			double failoverTimeout) {
@@ -103,7 +105,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedSubscribed(Subscribed subscribed) {
-		mesosHandler.insertFrameworkId(subscribed.getFrameworkId());
+		mesosHandler.upsertFrameworkId(subscribed.getFrameworkId());
+		frameworkId = subscribed.getFrameworkId();
 		log.info("Whoho, I am subscribed on framework id: " + subscribed.getFrameworkId());
 	}
 
@@ -168,6 +171,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	@Override
 	public void receivedUpdate(TaskStatus update) {
 		instanceHandler.updateTaskState(update.getTaskId().getValue().toString(), update.getState().name());
+		mesosHandler.upsertFrameworkId(frameworkId);
 		notifyPersistant(update);
 		log.info(update.toString());
 	}
