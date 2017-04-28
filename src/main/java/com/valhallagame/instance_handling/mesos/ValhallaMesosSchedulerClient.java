@@ -12,11 +12,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -37,18 +39,22 @@ import org.apache.mesos.v1.Protos.TaskStatus;
 import org.apache.mesos.v1.scheduler.Protos.Event.Failure;
 import org.apache.mesos.v1.scheduler.Protos.Event.Message;
 import org.apache.mesos.v1.scheduler.Protos.Event.Subscribed;
-import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.valhallagame.instance_handling.handlers.InstanceHandler;
-import com.valhallagame.instance_handling.handlers.MesosHandler;
 import com.valhallagame.instance_handling.messages.InstanceAdd;
 import com.valhallagame.instance_handling.messages.InstanceUpdate;
+import com.valhallagame.instance_handling.model.Instance;
+import com.valhallagame.instance_handling.model.MesosFramework;
+import com.valhallagame.instance_handling.repository.InstanceRepository;
+import com.valhallagame.instance_handling.repository.TaskRepository;
+import com.valhallagame.instance_handling.service.MesosService;
 import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
 
 @Service
@@ -62,22 +68,27 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 
+	@Autowired
+	private InstanceRepository instanceRepository;
+	
+	@Autowired
+	private TaskRepository taskRepository;
+	
+	@Autowired
+	private MesosService mesosService;
+	
 	private ObjectMapper mapper = new ObjectMapper();
-	private MesosHandler mesosHandler;
-	private InstanceHandler instanceHandler;
 	private WebTarget persistant;
 	private URL slaveUrl;
 	private URL taskUrl;
 	private FrameworkID frameworkId;
 
-	public ValhallaMesosSchedulerClient(MesosHandler mesosHandler, InstanceHandler instanceHandler,
-			double failoverTimeout) {
+	@PostConstruct
+	public void init() {
 		mapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
 		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
 		mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
 
-		this.mesosHandler = mesosHandler;
-		this.instanceHandler = instanceHandler;
 		try {
 			this.slaveUrl = new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050")
 					+ "/master/slaves");
@@ -90,10 +101,12 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url",
 				"http://localhost:1234/valhalla"));
 
+		MesosFramework mesosFramework = mesosService.getLatestValidFramework(30000D);
+		
 		try {
 			subscribe(new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050")
-					+ "/api/v1/scheduler"), failoverTimeout,
-					"Valhalla", mesosHandler.getLatestValidFrameworkId(failoverTimeout));
+					+ "/api/v1/scheduler"), 30000D,
+					"Valhalla", mesosFramework == null ? null : mesosFramework.getId());
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
 		}
@@ -105,7 +118,13 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedSubscribed(Subscribed subscribed) {
-		mesosHandler.upsertFrameworkId(subscribed.getFrameworkId());
+		MesosFramework mesosFramework = mesosService.getMesosFramework(subscribed.getFrameworkId());
+		if(mesosFramework == null) {
+			mesosFramework = new MesosFramework();
+			mesosFramework.setId(subscribed.getFrameworkId().getValue());
+		}
+		mesosFramework.setTimestamp(new Date());
+		mesosService.save(mesosFramework);
 		frameworkId = subscribed.getFrameworkId();
 		log.info("Whoho, I am subscribed on framework id: " + subscribed.getFrameworkId());
 	}
@@ -170,8 +189,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedUpdate(TaskStatus update) {
-		instanceHandler.updateTaskState(update.getTaskId().getValue().toString(), update.getState().name());
-		mesosHandler.upsertFrameworkId(frameworkId);
+//		instanceHandler.updateTaskState(update.getTaskId().getValue().toString(), update.getState().name());
+//		mesosHandler.upsertFrameworkId(frameworkId);
 		notifyPersistant(update);
 		log.info(update.toString());
 	}
@@ -290,11 +309,11 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private void notifyPersistant(TaskStatus update) {
 
-		int instanceId = instanceHandler.getInstanceId(update.getTaskId().getValue().toString());
+		Instance instance = instanceRepository.findByTaskId(update.getTaskId().getValue().toString());
 		Slave slave = getSlave(update.getAgentId().getValue());
 		Task task = getTask(update.getTaskId().getValue());
 
-		InstanceUpdate message = new InstanceUpdate(instanceId, update.getState().name(),
+		InstanceUpdate message = new InstanceUpdate(instance.getId(), update.getState().name(),
 				(slave != null ? slave.hostname : "0.0.0.0"),
 				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).get() : -1));
 

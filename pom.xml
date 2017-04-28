@@ -27,14 +27,17 @@
 			<version>0.0.2</version>
 		</dependency>
 		<dependency>
-			<groupId>io.dropwizard</groupId>
-			<artifactId>dropwizard-core</artifactId>
-			<version>${dropwizard.version}</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.dropwizard</groupId>
-			<artifactId>dropwizard-jdbi</artifactId>
-			<version>${dropwizard.version}</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -63,19 +66,52 @@
 			<artifactId>flyway-core</artifactId>
 			<version>4.0.3</version>
 		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.16.12</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+		    <groupId>javax.ws.rs</groupId>
+		    <artifactId>javax.ws.rs-api</artifactId>
+		    <version>2.0.1</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.glassfish.jersey.core</groupId>
+		    <artifactId>jersey-client</artifactId>
+		    <version>2.25.1</version>
+		</dependency>
+
 	</dependencies>
 
 	<properties>
 		<!-- use UTF-8 for everything -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<dropwizard.version>1.0.3</dropwizard.version>
 		<swagger-core-version>1.5.9</swagger-core-version>
 	</properties>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.4.3.RELEASE</version>
+	</parent>
 
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- <plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>1.2.1</version>
@@ -89,13 +125,12 @@
 				<configuration>
 					<mainClass>com.valhallagame.instance_handling.Main</mainClass>
 				</configuration>
-			</plugin>
-
+			</plugin> -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
-				<!-- compile for Java 1.7 -->
+				<!-- compile for Java 1.8 -->
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>

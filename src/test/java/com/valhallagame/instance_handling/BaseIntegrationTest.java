@@ -17,7 +17,7 @@ public abstract class BaseIntegrationTest {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-		Main.main(new String[] {});
+		App.main(new String[] {});
 		Client c = ClientBuilder.newClient();
 		target = c.target("http://localhost:4321");
 	}
