@@ -189,8 +189,12 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedUpdate(TaskStatus update) {
-//		instanceHandler.updateTaskState(update.getTaskId().getValue().toString(), update.getState().name());
-//		mesosHandler.upsertFrameworkId(frameworkId);
+		com.valhallagame.instance_handling.model.Task task = taskRepository.findByTaskId(update.getTaskId().getValue());
+		task.setTaskState(update.getState().name());
+		taskRepository.save(task);
+		MesosFramework mesosFramework = mesosService.getMesosFramework(frameworkId);
+		mesosFramework.setTimestamp(new Date());
+		mesosService.save(mesosFramework);
 		notifyPersistant(update);
 		log.info(update.toString());
 	}

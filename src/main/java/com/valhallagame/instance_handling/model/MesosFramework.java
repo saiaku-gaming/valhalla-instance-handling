@@ -8,9 +8,11 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
 @Entity
+@ToString
 @Table(name = "mesos_framework")
 public class MesosFramework {
 

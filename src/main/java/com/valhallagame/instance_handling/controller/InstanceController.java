@@ -1,14 +1,14 @@
 package com.valhallagame.instance_handling.controller;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -34,33 +34,32 @@ public class InstanceController {
 	@Autowired
 	private ValhallaMesosSchedulerClient mesosClient;
 	
-	@RequestMapping(path = "/queue-instance", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(path = "/queue-instance", method = RequestMethod.POST)
 	@ApiOperation(value = "Queues an instance.")
 	@ResponseBody
-	public Response start(InstanceAdd instanceAdd) {
+	public ResponseEntity<?> start(InstanceAdd instanceAdd) throws IOException {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd HH:mm");
 		String date = sdf.format(new Date());
-
+		System.out.println(instanceAdd.toString());
 		if (instanceAdd.getTaskId() == null || instanceAdd.getTaskId().equals("")) {
 			String taskId = instanceAdd.getInstanceId() + " v:" + instanceAdd.getVersion() + " s:" + instanceAdd
 					.getPersistentServerUrl() + " l:" + instanceAdd.getLevel() + " t:" + date;
 			instanceAdd.setTaskId(taskId);
 		}
-
 		mesosClient.queueInstance(instanceAdd);
-		
 		Task task = new Task(instanceAdd.getTaskId(), instanceAdd.getInstanceId(), null);
 		taskRepository.save(task);
-		return JS.message(Status.OK, "Instance queued");
+		return JS.message(HttpStatus.OK, "Instance queued for creation");
 	}
 	
 	@RequestMapping(path = "/kill-instance", method = RequestMethod.POST)
 	@ApiOperation(value = "Kills an instance without any checks. Pure killing!")
 	@ResponseBody
-	public Response killInstance(InstanceParameter instanceParameter) {
+	public ResponseEntity<?> killInstance(@RequestBody InstanceParameter instanceParameter) {
+		System.out.println(instanceParameter.toString());
 		Task task = taskRepository.findByInstanceId(instanceParameter.getInstanceId());
 		mesosClient.kill(task.getTaskId());
-		return JS.message(Status.OK, "Scheduled for killing");
+		return JS.message(HttpStatus.OK, "Scheduled for killing");
 	}
 	
 }

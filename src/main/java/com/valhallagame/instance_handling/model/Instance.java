@@ -10,9 +10,11 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
 @Entity
+@ToString
 @Table(name = "instance")
 public class Instance {
 

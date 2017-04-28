@@ -1,7 +1,9 @@
 package com.valhallagame.instance_handling.utils;
 
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,12 +21,20 @@ public class JS {
 
 	}
 
-	public static Response message(Status status, String message) {
-		return Response.status(status).entity(JS.message(message)).build();
+	public static ResponseEntity<?> message(Status status, String message) {
+		return ResponseEntity.status(status.getStatusCode()).body(JS.message(message));
+	}
+	
+	public static ResponseEntity<?> message(HttpStatus status, String message) {
+		return ResponseEntity.status(status).body(JS.message(message));
+	}
+	
+	public static ResponseEntity<?> message(Status status, Object o) {
+		return ResponseEntity.status(status.getStatusCode()).body(JS.parse(o));
 	}
 
-	public static Response message(Status status, Object o) {
-		return Response.status(status).entity(JS.parse(o)).build();
+	public static ResponseEntity<?> message(HttpStatus status, Object o) {
+		return ResponseEntity.status(status).body(JS.parse(o));
 	}
 
 	public static JsonMessage message(String message) {
