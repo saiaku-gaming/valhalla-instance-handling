@@ -3,7 +3,10 @@ package com.valhallagame.instance_handling;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,21 +24,21 @@ public class App {
 	
 
 	public static void main(String[] args) throws Exception {
-//		log.info("Running with arguments: " + String.join(",", args));
-//		Socket s = new Socket();
-//		try {
-//			s.connect(new InetSocketAddress("localhost", RESTART_PORT));
-//			Thread.sleep(100);
-//		} catch (ConnectException e) {
-//			// nothing to restart - ignore
-//		} finally {
-//			s.close();
-//		}
-//		startRestartThread();
-//
-//		loadSystemProperties();
-
 		SpringApplication.run(App.class, args);
+		
+		log.info("Running with arguments: " + String.join(",", args));
+		Socket s = new Socket();
+		try {
+			s.connect(new InetSocketAddress("localhost", RESTART_PORT));
+			Thread.sleep(100);
+		} catch (ConnectException e) {
+			// nothing to restart - ignore
+		} finally {
+			s.close();
+		}
+		startRestartThread();
+
+		loadSystemProperties();
 	}
 
 	private static void loadSystemProperties() {

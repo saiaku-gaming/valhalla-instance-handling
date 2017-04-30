@@ -42,6 +42,7 @@ import org.apache.mesos.v1.scheduler.Protos.Event.Subscribed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
@@ -77,6 +78,9 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	@Autowired
 	private MesosService mesosService;
 	
+	@Value("${mesos.failover-timeout}")
+	private double failoverTimeout;
+	
 	private ObjectMapper mapper = new ObjectMapper();
 	private WebTarget persistant;
 	private URL slaveUrl;
@@ -101,11 +105,11 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url",
 				"http://localhost:1234/valhalla"));
 
-		MesosFramework mesosFramework = mesosService.getLatestValidFramework(30000D);
+		MesosFramework mesosFramework = mesosService.getLatestValidFramework(failoverTimeout);
 		
 		try {
 			subscribe(new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050")
-					+ "/api/v1/scheduler"), 30000D,
+					+ "/api/v1/scheduler"), failoverTimeout,
 					"Valhalla", mesosFramework == null ? null : mesosFramework.getId());
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
