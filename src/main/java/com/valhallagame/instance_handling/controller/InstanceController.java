@@ -17,7 +17,7 @@ import com.valhallagame.instance_handling.mesos.ValhallaMesosSchedulerClient;
 import com.valhallagame.instance_handling.messages.InstanceAdd;
 import com.valhallagame.instance_handling.messages.InstanceParameter;
 import com.valhallagame.instance_handling.model.Task;
-import com.valhallagame.instance_handling.repository.TaskRepository;
+import com.valhallagame.instance_handling.service.TaskService;
 import com.valhallagame.instance_handling.utils.JS;
 
 import io.swagger.annotations.Api;
@@ -29,7 +29,7 @@ import io.swagger.annotations.ApiOperation;
 public class InstanceController {
 
 	@Autowired
-	private TaskRepository taskRepository;
+	private TaskService taskService;
 	
 	@Autowired
 	private ValhallaMesosSchedulerClient mesosClient;
@@ -37,10 +37,9 @@ public class InstanceController {
 	@RequestMapping(path = "/queue-instance", method = RequestMethod.POST)
 	@ApiOperation(value = "Queues an instance.")
 	@ResponseBody
-	public ResponseEntity<?> start(InstanceAdd instanceAdd) throws IOException {
+	public ResponseEntity<?> start(@RequestBody InstanceAdd instanceAdd) throws IOException {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd HH:mm");
 		String date = sdf.format(new Date());
-		System.out.println(instanceAdd.toString());
 		if (instanceAdd.getTaskId() == null || instanceAdd.getTaskId().equals("")) {
 			String taskId = instanceAdd.getInstanceId() + " v:" + instanceAdd.getVersion() + " s:" + instanceAdd
 					.getPersistentServerUrl() + " l:" + instanceAdd.getLevel() + " t:" + date;
@@ -48,7 +47,7 @@ public class InstanceController {
 		}
 		mesosClient.queueInstance(instanceAdd);
 		Task task = new Task(instanceAdd.getTaskId(), instanceAdd.getInstanceId(), null);
-		taskRepository.save(task);
+		taskService.save(task);
 		return JS.message(HttpStatus.OK, "Instance queued for creation");
 	}
 	
@@ -57,7 +56,7 @@ public class InstanceController {
 	@ResponseBody
 	public ResponseEntity<?> killInstance(@RequestBody InstanceParameter instanceParameter) {
 		System.out.println(instanceParameter.toString());
-		Task task = taskRepository.findByInstanceId(instanceParameter.getInstanceId());
+		Task task = taskService.getTask(instanceParameter.getInstanceId());
 		mesosClient.kill(task.getTaskId());
 		return JS.message(HttpStatus.OK, "Scheduled for killing");
 	}

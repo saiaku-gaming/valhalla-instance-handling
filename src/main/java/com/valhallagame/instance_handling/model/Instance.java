@@ -1,6 +1,5 @@
 package com.valhallagame.instance_handling.model;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -43,9 +42,8 @@ public class Instance {
 	@Column(name = "task_id")
 	private String taskId;
 	
+	@Column(name = "persistent_server_url")
 	private String persistentServerUrl;
-	private Instant serverCallbackTimestamp;
-	private boolean ready;
 	
 	public Instance() {
 	}
@@ -56,8 +54,6 @@ public class Instance {
 		this.version = version;
 		this.timestamp = new Date();
 		this.setTaskId(UUID.randomUUID().toString());
-		this.serverCallbackTimestamp = Instant.EPOCH;
 		this.persistentServerUrl = persistentServerUrl;
-		this.ready = false;
 	}
 }

@@ -36,10 +36,6 @@ public class App {
 //		loadSystemProperties();
 
 		SpringApplication.run(App.class, args);
-		
-//		context.getBean(ValhallaMesosSchedulerClient.class).init();
-		
-//		new Main().run("server", "instance-handling.yml");
 	}
 
 	private static void loadSystemProperties() {
@@ -51,48 +47,6 @@ public class App {
 			log.error("", e);
 		}
 
-	}
-
-//	private static void updateDB(DataSource dataSource) {
-//		log.info("Patching database.");
-//
-//		// Create the Flyway instance
-//		Flyway flyway = new Flyway();
-//
-//		// Point it to the database
-//		flyway.setDataSource(dataSource);
-//
-//		// if debug machine
-//		if (System.getProperty("valhalla.server.secret", "SERVER_SECRET").equals("SERVER_SECRET")) {
-//			flyway.clean();
-//		}
-//
-//		flyway.migrate();
-//		log.info("Patching database complete.");
-//	}
-
-//	@Override
-//	public String getName() {
-//		return "Instance Handling";
-//	}
-
-//	@Override
-//	public void initialize(Bootstrap<InstanceHandlingConfiguration> bootstrap) {
-//		// nothing to do yet and dont really know what to do here
-//	}
-
-	public static void run(/*InstanceHandlingConfiguration configuration, Environment environment*/) {
-//		updateDB(configuration.getDatabase().build(environment.metrics(), "postgresql"));
-
-//		final DBIFactory factory = new DBIFactory();
-//
-//		final DBI jdbi = factory.build(environment, configuration.getDatabase(), "postgresql");
-
-//		setupDependencyInjection(environment.jersey());
-
-//		registerHealthchecks(environment, configuration);
-		
-//		registerResources(environment, jdbi, configuration);
 	}
 
 	private static void startRestartThread() {
@@ -115,46 +69,5 @@ public class App {
 			}
 		}.start();
 	}
-
-//	private static void setupDependencyInjection(JerseyEnvironment env) {
-//		env.register(new AbstractBinder() {
-//			@Override
-//			protected void configure() {
-//				bind(InstanceHandler.class).to(InstanceHandler.class);
-//			}
-//		});
-//
-//		env.register(new AbstractBinder() {
-//			@Override
-//			protected void configure() {
-//				bind(MesosHandler.class).to(MesosHandler.class);
-//			}
-//		});
-//
-//		env.register(new AbstractBinder() {
-//			@Override
-//			protected void configure() {
-//				bind(new ValhallaMesosSchedulerClient()).to(ValhallaMesosSchedulerClient.class);
-//			}
-//		});
-//	}
-	
-//	private static void registerHealthchecks(Environment environment, InstanceHandlingConfiguration configuration) {
-//		
-//		final TemplateHealthCheck templateHealthCheck = new TemplateHealthCheck(configuration.getTemplate());
-//
-//		environment.healthChecks().register("template", templateHealthCheck);
-//	}
-//	
-//	private static void registerResources(Environment environment, DBI jdbi, InstanceHandlingConfiguration configuration) {
-//		
-//		final InstanceDAO instanceDAO = jdbi.onDemand(InstanceDAO.class);
-//		final MesosDAO mesosDAO = jdbi.onDemand(MesosDAO.class);
-//		
-//		final InstanceHandler instanceHandler = new InstanceHandler(instanceDAO);
-//		final MesosHandler mesosHandler = new MesosHandler(mesosDAO, configuration.getMesos(), instanceHandler);
-//		
-//		environment.jersey().register(new InstanceResource(instanceHandler, mesosHandler));
-//	}
 
 }

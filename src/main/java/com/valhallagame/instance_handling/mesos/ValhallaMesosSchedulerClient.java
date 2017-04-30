@@ -52,9 +52,9 @@ import com.valhallagame.instance_handling.messages.InstanceAdd;
 import com.valhallagame.instance_handling.messages.InstanceUpdate;
 import com.valhallagame.instance_handling.model.Instance;
 import com.valhallagame.instance_handling.model.MesosFramework;
-import com.valhallagame.instance_handling.repository.InstanceRepository;
-import com.valhallagame.instance_handling.repository.TaskRepository;
+import com.valhallagame.instance_handling.service.InstanceService;
 import com.valhallagame.instance_handling.service.MesosService;
+import com.valhallagame.instance_handling.service.TaskService;
 import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
 
 @Service
@@ -69,10 +69,10 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 
 	@Autowired
-	private InstanceRepository instanceRepository;
+	private InstanceService instanceService;
 	
 	@Autowired
-	private TaskRepository taskRepository;
+	private TaskService taskService;
 	
 	@Autowired
 	private MesosService mesosService;
@@ -189,9 +189,9 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedUpdate(TaskStatus update) {
-		com.valhallagame.instance_handling.model.Task task = taskRepository.findByTaskId(update.getTaskId().getValue());
+		com.valhallagame.instance_handling.model.Task task = taskService.getTask(update.getTaskId().getValue());
 		task.setTaskState(update.getState().name());
-		taskRepository.save(task);
+		taskService.save(task);
 		MesosFramework mesosFramework = mesosService.getMesosFramework(frameworkId);
 		mesosFramework.setTimestamp(new Date());
 		mesosService.save(mesosFramework);
@@ -313,7 +313,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private void notifyPersistant(TaskStatus update) {
 
-		Instance instance = instanceRepository.findByTaskId(update.getTaskId().getValue().toString());
+		Instance instance = instanceService.getInstance(update.getTaskId().getValue().toString());
 		Slave slave = getSlave(update.getAgentId().getValue());
 		Task task = getTask(update.getTaskId().getValue());
 

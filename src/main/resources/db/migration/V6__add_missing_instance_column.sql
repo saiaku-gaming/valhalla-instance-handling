@@ -1,0 +1,1 @@
+ALTER TABLE instance ADD COLUMN persistent_server_url TEXT;
