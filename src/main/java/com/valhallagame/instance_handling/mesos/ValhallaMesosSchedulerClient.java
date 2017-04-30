@@ -100,12 +100,12 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url",
 				"http://localhost:1234/valhalla"));
 
-		MesosFramework mesosFramework = mesosService.getLatestValidFramework(failoverTimeout);
+		Optional<MesosFramework> mesosFrameworkOpt = mesosService.getLatestValidFramework(failoverTimeout);
 		
 		try {
 			subscribe(new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050")
 					+ "/api/v1/scheduler"), failoverTimeout,
-					"Valhalla", mesosFramework == null ? null : mesosFramework.getId());
+					"Valhalla", mesosFrameworkOpt.isPresent() ? mesosFrameworkOpt.get().getId() : null);
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
 		}
@@ -117,12 +117,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedSubscribed(Subscribed subscribed) {
-		MesosFramework mesosFramework = mesosService.getMesosFramework(subscribed.getFrameworkId());
-		if(mesosFramework == null) {
-			mesosFramework = new MesosFramework();
-			mesosFramework.setId(subscribed.getFrameworkId().getValue());
-		}
-		mesosFramework.setTimestamp(new Date());
+		MesosFramework mesosFramework = mesosService.getMesosFramework(subscribed.getFrameworkId())
+			.orElse(new MesosFramework(subscribed.getFrameworkId().getValue()));
 		mesosService.save(mesosFramework);
 		frameworkId = subscribed.getFrameworkId();
 		log.info("Whoho, I am subscribed on framework id: " + subscribed.getFrameworkId());
@@ -188,12 +184,22 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	@Override
 	public void receivedUpdate(TaskStatus update) {
-		com.valhallagame.instance_handling.model.Task task = taskService.getTask(update.getTaskId().getValue());
-		task.setTaskState(update.getState().name());
-		taskService.save(task);
-		MesosFramework mesosFramework = mesosService.getMesosFramework(frameworkId);
-		mesosFramework.setTimestamp(new Date());
-		mesosService.save(mesosFramework);
+		Optional<com.valhallagame.instance_handling.model.Task> taskOpt = taskService.getTask(update.getTaskId().getValue());
+		
+		if(!taskOpt.isPresent()) {
+			log.error("receivedUpdate: could not find task with id " + update.getTaskId().getValue());
+			return;
+		}
+		
+		taskOpt.get().setTaskState(update.getState().name());
+		taskService.save(taskOpt.get());
+		Optional<MesosFramework> mesosFrameworkOpt = mesosService.getMesosFramework(frameworkId);
+		if(mesosFrameworkOpt.isPresent()) {
+			mesosFrameworkOpt.get().setTimestamp(new Date());
+			mesosService.save(mesosFrameworkOpt.get());
+		} else {
+			log.error("receivedUpdate: could not find framework with id " + frameworkId.getValue());
+		}
 		notifyPersistant(update);
 		log.info(update.toString());
 	}
@@ -311,8 +317,15 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	}
 
 	private void notifyPersistant(TaskStatus update) {
-
-		Integer instanceId = taskService.getTask(update.getTaskId().getValue().toString()).getInstanceId();
+		
+		Optional<com.valhallagame.instance_handling.model.Task> taskOpt = taskService.getTask(update.getTaskId().getValue());
+		
+		if(!taskOpt.isPresent()) {
+			log.error("notifyPersistant: could not find task with id " + update.getTaskId().getValue());
+			return;
+		}
+		
+		Integer instanceId = taskOpt.get().getInstanceId();
 		Slave slave = getSlave(update.getAgentId().getValue());
 		Task task = getTask(update.getTaskId().getValue());
 

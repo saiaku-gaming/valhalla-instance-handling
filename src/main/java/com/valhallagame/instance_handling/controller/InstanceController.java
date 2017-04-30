@@ -3,6 +3,7 @@ package com.valhallagame.instance_handling.controller;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,7 @@ public class InstanceController {
 		mesosClient.queueInstance(instanceAdd);
 		Task task = new Task(instanceAdd.getTaskId(), instanceAdd.getInstanceId(), null);
 		taskService.save(task);
+		
 		return JS.message(HttpStatus.OK, "Instance queued for creation");
 	}
 	
@@ -55,10 +57,13 @@ public class InstanceController {
 	@ApiOperation(value = "Kills an instance without any checks. Pure killing!")
 	@ResponseBody
 	public ResponseEntity<?> killInstance(@RequestBody InstanceParameter instanceParameter) {
-		System.out.println(instanceParameter.toString());
-		Task task = taskService.getTask(instanceParameter.getInstanceId());
-		mesosClient.kill(task.getTaskId());
-		return JS.message(HttpStatus.OK, "Scheduled for killing");
+		Optional<Task> taskOpt = taskService.getTask(instanceParameter.getInstanceId());
+		if(taskOpt.isPresent()) {
+			mesosClient.kill(taskOpt.get().getTaskId());
+			return JS.message(HttpStatus.OK, "Scheduled for killing");
+		} else {
+			return JS.message(HttpStatus.NOT_FOUND, "Could not find task with instance id: " + instanceParameter.getInstanceId());
+		}
 	}
 	
 }

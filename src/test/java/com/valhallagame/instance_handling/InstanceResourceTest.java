@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
@@ -21,7 +20,6 @@ public class InstanceResourceTest extends BaseIntegrationTest {
 	public void startTest() throws IOException {
 		InstanceAdd message = new InstanceAdd(new Random().nextInt(), "TrialMap", "latest", "persistent.valhalla-game.com");
 		
-		OkHttpClient client = new OkHttpClient();
 		ObjectMapper mapper = new ObjectMapper();
 		
 		String json = mapper.writeValueAsString(message);
@@ -31,7 +29,7 @@ public class InstanceResourceTest extends BaseIntegrationTest {
 				.post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json))
 				.build();
 		
-		Response response = client.newCall(request).execute();
+		Response response = getClient().newCall(request).execute();
 		
 		System.out.println("response: " + response.body().string());
 		
@@ -43,7 +41,6 @@ public class InstanceResourceTest extends BaseIntegrationTest {
 		int instanceId = new Random().nextInt();
 		InstanceAdd message = new InstanceAdd(instanceId, "TrialMap", "latest", "persistent.valhalla-game.com");
 		
-		OkHttpClient client = new OkHttpClient();
 		ObjectMapper mapper = new ObjectMapper();
 		
 		String json = mapper.writeValueAsString(message);
@@ -53,7 +50,7 @@ public class InstanceResourceTest extends BaseIntegrationTest {
 				.post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json))
 				.build();
 		
-		Response response = client.newCall(request).execute();
+		Response response = getClient().newCall(request).execute();
 		
 		System.out.println("response: " + response.body().string());
 		Assert.assertEquals(200, response.code());
@@ -72,7 +69,7 @@ public class InstanceResourceTest extends BaseIntegrationTest {
 				.post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json))
 				.build();
 		
-		response = client.newCall(request).execute();
+		response = getClient().newCall(request).execute();
 		
 		System.out.println("response: " + response.body().string());
 		Assert.assertEquals(200, response.code());

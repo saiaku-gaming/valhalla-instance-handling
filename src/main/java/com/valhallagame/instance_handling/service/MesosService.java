@@ -1,6 +1,8 @@
 package com.valhallagame.instance_handling.service;
 
 
+import java.util.Optional;
+
 import org.apache.mesos.v1.Protos.FrameworkID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,19 +20,19 @@ public class MesosService {
 		mesosRepository.save(mesosFramework);
 	}
 	
-	public MesosFramework getMesosFramework(FrameworkID frameworkId) {
+	public Optional<MesosFramework> getMesosFramework(FrameworkID frameworkId) {
 		return getMesosFramework(frameworkId.getValue());
 	}
 	
-	public MesosFramework getMesosFramework(String mesosFrameworkId) {
+	public Optional<MesosFramework> getMesosFramework(String mesosFrameworkId) {
 		return mesosRepository.findById(mesosFrameworkId);
 	}
 	
-	public MesosFramework getLatestFramework() {
+	public Optional<MesosFramework> getLatestFramework() {
 		return mesosRepository.getLatestMesosFramework();
 	}
 	
-	public MesosFramework getLatestValidFramework(double failoverTimeout) {
+	public Optional<MesosFramework> getLatestValidFramework(double failoverTimeout) {
 		return mesosRepository.getLatestValidMesosFramework(failoverTimeout);
 	}
 }

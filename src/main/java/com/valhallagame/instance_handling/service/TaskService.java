@@ -1,5 +1,7 @@
 package com.valhallagame.instance_handling.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,11 +14,11 @@ public class TaskService {
 	@Autowired
 	private TaskRepository taskRepository;
 	
-	public Task getTask(String taskId) {
+	public Optional<Task> getTask(String taskId) {
 		return taskRepository.findByTaskId(taskId);
 	}
 	
-	public Task getTask(Integer instanceId) {
+	public Optional<Task> getTask(Integer instanceId) {
 		return taskRepository.findByInstanceId(instanceId);
 	}
 	
