@@ -118,7 +118,8 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- <plugin>
+			<!-- Something phrozen found on the inter-webs to make maven run java... -->
+			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>1.2.1</version>
@@ -132,7 +133,7 @@
 				<configuration>
 					<mainClass>com.valhallagame.instance_handling.Main</mainClass>
 				</configuration>
-			</plugin> -->
+ 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
