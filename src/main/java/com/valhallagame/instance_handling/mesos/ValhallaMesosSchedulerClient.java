@@ -51,9 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.valhallagame.instance_handling.messages.InstanceAdd;
 import com.valhallagame.instance_handling.messages.InstanceUpdate;
-import com.valhallagame.instance_handling.model.Instance;
 import com.valhallagame.instance_handling.model.MesosFramework;
-import com.valhallagame.instance_handling.service.InstanceService;
 import com.valhallagame.instance_handling.service.MesosService;
 import com.valhallagame.instance_handling.service.TaskService;
 import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
@@ -69,9 +67,6 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 
-	@Autowired
-	private InstanceService instanceService;
-	
 	@Autowired
 	private TaskService taskService;
 	
@@ -317,11 +312,11 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private void notifyPersistant(TaskStatus update) {
 
-		Instance instance = instanceService.getInstance(update.getTaskId().getValue().toString());
+		Integer instanceId = taskService.getTask(update.getTaskId().getValue().toString()).getInstanceId();
 		Slave slave = getSlave(update.getAgentId().getValue());
 		Task task = getTask(update.getTaskId().getValue());
 
-		InstanceUpdate message = new InstanceUpdate(instance.getId(), update.getState().name(),
+		InstanceUpdate message = new InstanceUpdate(instanceId, update.getState().name(),
 				(slave != null ? slave.hostname : "0.0.0.0"),
 				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).get() : -1));
 
@@ -406,10 +401,11 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private static class Slaves {
 		List<Slave> slaves;
-
+		List<Slave> recoveredSlaves;
+		
 		@Override
 		public String toString() {
-			return "Slaves [slaves=" + slaves + "]";
+			return "Slaves [slaves=" + slaves + ", recoveredSlaves=" + recoveredSlaves + "]";
 		}
 	}
 
@@ -447,18 +443,29 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		Scalar scalar;
 		String role;
 		Ranges ranges;
-
+		AllocationInfo allocationInfo;
+		
 		@Override
 		public String toString() {
 			return "ResourcesFull [name=" + name + ", type=" + type + ", scalar=" + scalar + ", role=" + role
-					+ ", ranges=" + ranges + "]";
+					+ ", ranges=" + ranges + ", allocationInfo=" + allocationInfo + "]";
 		}
 	}
 
+	private static class AllocationInfo {
+		String role;
+
+		@Override
+		public String toString() {
+			return "AllocationInfo [role=" + role + "]";
+		}
+	}
+	
 	private static class Slave {
 		String id;
 		String pid;
 		String hostname;
+		int port;
 		double registered_time;
 		double reregistered_time;
 		Resources resources;
@@ -475,7 +482,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 		@Override
 		public String toString() {
-			return "Slave [id=" + id + ", pid=" + pid + ", hostname=" + hostname + ", registered_time="
+			return "Slave [id=" + id + ", pid=" + pid + ", hostname=" + hostname + ", port=" + port + ", registered_time="
 					+ registered_time + ", reregistered_time=" + reregistered_time + ", resources=" + resources
 					+ ", usedResources=" + usedResources + ", offeredResources=" + offeredResources
 					+ ", reservedResources=" + reservedResources + ", unreservedResources=" + unreservedResources
