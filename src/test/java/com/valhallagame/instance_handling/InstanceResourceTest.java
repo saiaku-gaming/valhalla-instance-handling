@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Random;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +18,7 @@ import com.valhallagame.instance_handling.messages.InstanceParameter;
 public class InstanceResourceTest extends BaseIntegrationTest {
 
 	@Test
+	@Ignore("Integration tests")
 	public void startTest() throws IOException {
 		InstanceAdd message = new InstanceAdd(new Random().nextInt(), "TrialMap", "latest", "persistent.valhalla-game.com");
 		
@@ -37,6 +39,7 @@ public class InstanceResourceTest extends BaseIntegrationTest {
 	}
 	
 	@Test
+	@Ignore("Integration tests")
 	public void queueAndKillInstance() throws IOException {
 		int instanceId = new Random().nextInt();
 		InstanceAdd message = new InstanceAdd(instanceId, "TrialMap", "latest", "persistent.valhalla-game.com");
