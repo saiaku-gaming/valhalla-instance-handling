@@ -38,18 +38,19 @@ public class App {
 		}
 		startRestartThread();
 
-		loadSystemProperties();
+		loadSystemProperties(args);
 	}
 
-	private static void loadSystemProperties() {
-		// override system properties with local properties
-		// Maybe /home/valhalla should be working directory or something?
-		try (InputStream inputStream = new FileInputStream("/home/valhalla/server.properties")) {
-			System.getProperties().load(inputStream);
-		} catch (IOException e) {
-			log.error("", e);
-		}
+	private static void loadSystemProperties(String[] args) {
 
+		if(args.length > 0) {
+			// override system properties with local properties
+			try (InputStream inputStream = new FileInputStream(args[0])) {
+				System.getProperties().load(inputStream);
+			} catch (IOException e) {
+				log.error("", e);
+			}
+		}
 	}
 
 	private static void startRestartThread() {
