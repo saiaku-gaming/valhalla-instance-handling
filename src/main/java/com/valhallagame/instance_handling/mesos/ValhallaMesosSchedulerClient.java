@@ -19,10 +19,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 
 import org.apache.mesos.v1.Protos;
 import org.apache.mesos.v1.Protos.AgentID;
@@ -49,6 +45,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import com.valhallagame.instance_handling.messages.InstanceAdd;
 import com.valhallagame.instance_handling.messages.InstanceUpdate;
 import com.valhallagame.instance_handling.model.MesosFramework;
@@ -77,10 +78,10 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	private double failoverTimeout;
 	
 	private ObjectMapper mapper = new ObjectMapper();
-	private WebTarget persistant;
 	private URL slaveUrl;
 	private URL taskUrl;
 	private FrameworkID frameworkId;
+	private String persistentBaseUrl;
 
 	@PostConstruct
 	public void init() {
@@ -97,9 +98,8 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			log.error("dang it", e);
 		}
 
-		persistant = ClientBuilder.newClient().target(System.getProperties().getProperty("persistent-url",
-				"http://localhost:1234/valhalla"));
-
+		persistentBaseUrl = System.getProperties().getProperty("persistent-url", "http://localhost:1234/valhalla");
+		
 		Optional<MesosFramework> mesosFrameworkOpt = mesosService.getLatestValidFramework(failoverTimeout);
 		
 		try {
@@ -333,12 +333,24 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 				(slave != null ? slave.hostname : "0.0.0.0"),
 				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).get() : -1));
 
-		Response resp = persistant.path("/v1/instance-service/update").request().header("Content-Type",
-				"application/json")
-				.header("session", System.getProperty("valhalla.server.secret")).post(Entity.json(message));
-
-		if (resp.getStatus() != 200) {
-			log.error("Something went wrong on instance update to persistant, code: " + resp.getStatus());
+		OkHttpClient client = new OkHttpClient();
+		ObjectMapper mapper = new ObjectMapper();
+		
+		try {
+			Request request = new Request.Builder()
+					.url(persistentBaseUrl + "/v1/server-instance-controller/update")
+					.header("session", System.getProperty("valhalla.server.secret"))
+					.post(RequestBody.create(MediaType.parse("application/json; charset=utf-8"), mapper.writeValueAsString(message)))
+					.build();
+			
+			Response response = client.newCall(request).execute();
+			
+			if (response.code() != 200) {
+				log.error("Something went wrong on instance update to persistent, code: " + response.code());
+			}
+		} catch(IOException e) {
+			log.error("Something when wrong when trying to update persistent");
+			e.printStackTrace();
 		}
 	}
 
