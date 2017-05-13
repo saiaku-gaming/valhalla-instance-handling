@@ -63,3 +63,7 @@ local.properties
 
 # Code Recommenders
 .recommenders/
+
+# Intellik
+.idea
+instance-handling.iml
