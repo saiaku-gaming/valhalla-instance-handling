@@ -98,7 +98,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			log.error("dang it", e);
 		}
 
-		persistentBaseUrl = System.getProperties().getProperty("persistent-url", "http://localhost:1234/valhalla");
+		persistentBaseUrl = System.getProperties().getProperty("persistent-url", "http://localhost:1234");
 		
 		Optional<MesosFramework> mesosFrameworkOpt = mesosService.getLatestValidFramework(failoverTimeout);
 		

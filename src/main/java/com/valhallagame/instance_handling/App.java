@@ -24,6 +24,8 @@ public class App {
 	
 
 	public static void main(String[] args) throws Exception {
+		loadSystemProperties(args);
+		
 		SpringApplication.run(App.class, args);
 		
 		log.info("Running with arguments: " + String.join(",", args));
@@ -37,8 +39,6 @@ public class App {
 			s.close();
 		}
 		startRestartThread();
-
-		loadSystemProperties(args);
 	}
 
 	private static void loadSystemProperties(String[] args) {
