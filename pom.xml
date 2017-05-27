@@ -90,6 +90,14 @@
             <artifactId>okhttp</artifactId>
             <version>2.7.5</version>
         </dependency>
+
+        <!-- error reporting central (graylog) -->
+        <dependency>
+            <groupId>biz.paluch.logging</groupId>
+            <artifactId>logstash-gelf</artifactId>
+            <version>1.11.1</version>
+        </dependency>
+
     </dependencies>
 
     <properties>
