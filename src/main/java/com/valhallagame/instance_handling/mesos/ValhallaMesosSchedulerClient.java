@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import com.google.protobuf.AbstractMessage;
 import org.apache.mesos.v1.Protos;
 import org.apache.mesos.v1.Protos.AgentID;
 import org.apache.mesos.v1.Protos.ContainerInfo.DockerInfo.PortMapping.Builder;
@@ -62,9 +63,9 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private static final Logger log = LoggerFactory.getLogger(ValhallaMesosSchedulerClient.class);
 
-	private static final double CPUS_PER_INSTANCE = 0.75D;
+	private static final double CPUS_PER_INSTANCE = 0.3D;
 
-	private static final double MB_RAM_PER_INSTANCE = 3000.0D;
+	private static final double MB_RAM_PER_INSTANCE = 100.0D;
 
 	private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 
@@ -105,7 +106,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		try {
 			subscribe(new URL(System.getProperty("mesos-master-url", "http://mesos-master.valhalla-game.com:5050")
 					+ "/api/v1/scheduler"), failoverTimeout,
-					"Valhalla", mesosFrameworkOpt.isPresent() ? mesosFrameworkOpt.get().getId() : null);
+					"Valhalla", mesosFrameworkOpt.map(MesosFramework::getId).orElse(null));
 		} catch (MalformedURLException | URISyntaxException e) {
 			log.error("fuck", e);
 		}
@@ -155,7 +156,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 			Operation op = Offer.Operation.newBuilder().setType(Offer.Operation.Type.LAUNCH)
 					.setLaunch(Offer.Operation.Launch.newBuilder().addAllTaskInfos(tasksInfos)).build();
 
-			accept(acceptedOffers, Arrays.asList(op));
+			accept(acceptedOffers, Collections.singletonList(op));
 		}
 
 		if (!declinedOffers.isEmpty()) {
@@ -166,7 +167,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 	@Override
 	public void receivedInverseOffers(List<InverseOffer> offers) {
 		// we dont care, we have already tried to respond to offer
-		List<String> s = offers.stream().map(f -> f.toString()).collect(Collectors.toList());
+		List<String> s = offers.stream().map(AbstractMessage::toString).collect(Collectors.toList());
 		log.info("Rescind InverseOffer " + String.join(", ", s));
 	}
 
@@ -243,7 +244,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 			final Resource cpus = cpuList.get(0);
 			final Resource mem = memList.get(0);
-			int port = ports.get(0).getRanges().getRangeList().stream().findAny().map(range -> range.getBegin())
+			int port = ports.get(0).getRanges().getRangeList().stream().findAny().map(Protos.Value.Range::getBegin)
 					.orElse(0L).intValue();
 			double availableCpu = cpus.getScalar().getValue();
 			double availableMem = mem.getScalar().getValue();
@@ -275,6 +276,10 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 		dockerInfoBuilder.addParameters(Protos.Parameter.newBuilder().setKey("rm").setValue("true").build());
 		dockerInfoBuilder
 				.addParameters(Protos.Parameter.newBuilder().setKey("oom-kill-disable").setValue("true").build());
+
+		dockerInfoBuilder.addParameters(Protos.Parameter.newBuilder().setKey("log-driver").setValue("gelf").build());
+
+		dockerInfoBuilder.addParameters(Protos.Parameter.newBuilder().setKey("log-opt").setValue("gelf-address=udp://valhalla-game.com:12201").build());
 
 		Builder portMappingBuilder = Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder();
 		portMappingBuilder.setHostPort(portNumber);
@@ -331,7 +336,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 		InstanceUpdate message = new InstanceUpdate(instanceId, update.getState().name(),
 				(slave != null ? slave.hostname : "0.0.0.0"),
-				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).get() : -1));
+				(task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).orElse(-1) : -1));
 
 		OkHttpClient client = new OkHttpClient();
 		ObjectMapper mapper = new ObjectMapper();
@@ -373,9 +378,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 			Optional<Slave> slave = slaves.slaves.stream().filter(s -> s.id.equals(agentId)).findFirst();
 
-			return slave.isPresent() ? slave.get() : null;
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			return slave.orElse(null);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -402,9 +405,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 			Optional<Task> task = tasks.tasks.stream().filter(t -> t.id.equals(agentId)).findFirst();
 
-			return task.isPresent() ? task.get() : null;
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			return task.orElse(null);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
