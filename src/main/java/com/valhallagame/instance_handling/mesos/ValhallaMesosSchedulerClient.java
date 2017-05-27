@@ -1,38 +1,22 @@
 package com.valhallagame.instance_handling.mesos;
 
-import static java.util.stream.Collectors.groupingBy;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
-
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.google.protobuf.AbstractMessage;
+import com.squareup.okhttp.*;
+import com.squareup.okhttp.Request;
+import com.valhallagame.instance_handling.messages.InstanceAdd;
+import com.valhallagame.instance_handling.messages.InstanceUpdate;
+import com.valhallagame.instance_handling.model.MesosFramework;
+import com.valhallagame.instance_handling.service.MesosService;
+import com.valhallagame.instance_handling.service.TaskService;
+import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
 import org.apache.mesos.v1.Protos;
-import org.apache.mesos.v1.Protos.AgentID;
+import org.apache.mesos.v1.Protos.*;
 import org.apache.mesos.v1.Protos.ContainerInfo.DockerInfo.PortMapping.Builder;
-import org.apache.mesos.v1.Protos.FrameworkID;
-import org.apache.mesos.v1.Protos.InverseOffer;
-import org.apache.mesos.v1.Protos.Offer;
 import org.apache.mesos.v1.Protos.Offer.Operation;
-import org.apache.mesos.v1.Protos.OfferID;
-import org.apache.mesos.v1.Protos.Resource;
-import org.apache.mesos.v1.Protos.TaskID;
-import org.apache.mesos.v1.Protos.TaskInfo;
-import org.apache.mesos.v1.Protos.TaskStatus;
 import org.apache.mesos.v1.scheduler.Protos.Event.Failure;
 import org.apache.mesos.v1.scheduler.Protos.Event.Message;
 import org.apache.mesos.v1.scheduler.Protos.Event.Subscribed;
@@ -42,21 +26,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
-import com.valhallagame.instance_handling.messages.InstanceAdd;
-import com.valhallagame.instance_handling.messages.InstanceUpdate;
-import com.valhallagame.instance_handling.model.MesosFramework;
-import com.valhallagame.instance_handling.service.MesosService;
-import com.valhallagame.instance_handling.service.TaskService;
-import com.valhallagame.mesos.scheduler_client.MesosSchedulerClient;
+import javax.annotation.PostConstruct;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 @Service
 public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
@@ -65,7 +46,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
 	private static final double CPUS_PER_INSTANCE = 0.3D;
 
-	private static final double MB_RAM_PER_INSTANCE = 100.0D;
+	private static final double MB_RAM_PER_INSTANCE = 1000.0D;
 
 	private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 
