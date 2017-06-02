@@ -319,6 +319,9 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
         Integer instanceId = taskOpt.get().getInstanceId();
         Slave slave = getSlave(update.getAgentId().getValue());
+
+        log.info("TaskId is : " + update.getTaskId().getValue());
+
         Task task = getTask(update.getTaskId().getValue());
 
         log.info("Got task: " + task );
@@ -388,6 +391,9 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
             }
 
             String data = convertStreamToString(conn.getInputStream());
+
+            log.info("getTask returned" + data);
+
             Tasks tasks = mapper.readValue(data, Tasks.class);
 
             conn.disconnect();
