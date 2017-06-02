@@ -275,7 +275,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
         containerInfoBuilder.setDocker(dockerInfoBuilder.build());
 
         //This might be a way to make sure that docker does not limit the ram usage of a container
-        Protos.RLimitInfo rLimit = Protos.RLimitInfo.newBuilder().addRlimits(Protos.RLimitInfo.RLimit.newBuilder().clearHard().clearSoft().setType(Protos.RLimitInfo.RLimit.Type.valueOf(Protos.RLimitInfo.RLimit.Type.RLMT_AS_VALUE))).build();
+        Protos.RLimitInfo rLimit = Protos.RLimitInfo.newBuilder().addRlimits(Protos.RLimitInfo.RLimit.newBuilder().clearHard().clearSoft().setType(Protos.RLimitInfo.RLimit.Type.RLMT_AS)).build();
         containerInfoBuilder.setRlimitInfo(rLimit);
 
         // Will replace a file on the instance so that the instance know
@@ -639,7 +639,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
     private static class Container {
         String type;
         Docker docker;
-        RLimit rlimitInfo;
+        RLimitInfo rlimitInfo;
 
         @Override
         public String toString() {
