@@ -396,7 +396,11 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
             Tasks tasks = mapper.readValue(data, Tasks.class);
 
+            log.info("Converted to " + tasks);
+
             conn.disconnect();
+
+            log.info("We are looking for task.id: " + agentId);
 
             Optional<Task> task = tasks.tasks.stream().filter(t -> t.id.equals(agentId)).findFirst();
 
