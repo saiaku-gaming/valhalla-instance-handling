@@ -316,9 +316,12 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
             return;
         }
 
+
         Integer instanceId = taskOpt.get().getInstanceId();
         Slave slave = getSlave(update.getAgentId().getValue());
         Task task = getTask(update.getTaskId().getValue());
+
+        log.info("Got task: " + task );
 
         InstanceUpdate message = new InstanceUpdate(instanceId, update.getState().name(),
                 (slave != null ? slave.hostname : "0.0.0.0"),
