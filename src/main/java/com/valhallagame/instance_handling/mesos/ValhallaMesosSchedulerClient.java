@@ -319,12 +319,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
         Integer instanceId = taskOpt.get().getInstanceId();
         Slave slave = getSlave(update.getAgentId().getValue());
-
-        log.info("TaskId is : " + update.getTaskId().getValue());
-
         Task task = getTask(update.getTaskId().getValue());
-
-        log.info("Got task: " + task );
 
         InstanceUpdate message = new InstanceUpdate(instanceId, update.getState().name(),
                 (slave != null ? slave.hostname : "0.0.0.0"),
@@ -387,26 +382,20 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
             conn.setRequestProperty("Accept", "application/json");
 
             if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+                throw new IOException("Failed : HTTP error code : " + conn.getResponseCode());
             }
 
             String data = convertStreamToString(conn.getInputStream());
 
-            log.info("getTask returned" + data);
-
             Tasks tasks = mapper.readValue(data, Tasks.class);
 
-            log.info("Converted to " + tasks);
-
             conn.disconnect();
-
-            log.info("We are looking for task.id: " + agentId);
 
             Optional<Task> task = tasks.tasks.stream().filter(t -> t.id.equals(agentId)).findFirst();
 
             return task.orElse(null);
         } catch (IOException e) {
-            log.error("Got exceptions!", e);
+            log.error("Got exception!", e);
         }
 
         return null;
