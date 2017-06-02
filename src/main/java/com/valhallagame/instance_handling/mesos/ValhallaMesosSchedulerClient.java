@@ -406,7 +406,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
             return task.orElse(null);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Got exceptions!", e);
         }
 
         return null;
