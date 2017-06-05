@@ -46,7 +46,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
     private static final double CPUS_PER_INSTANCE = 0.3D;
 
-    private static final double MB_RAM_PER_INSTANCE = 10.0D;
+    private static final double MB_RAM_PER_INSTANCE = 350.0D;
 
     private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 
