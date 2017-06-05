@@ -44,9 +44,9 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
 
     private static final Logger log = LoggerFactory.getLogger(ValhallaMesosSchedulerClient.class);
 
-    private static final double CPUS_PER_INSTANCE = 0.3D;
+    private static final double CPUS_PER_INSTANCE = 0.5D;
 
-    private static final double MB_RAM_PER_INSTANCE = 350.0D;
+    private static final double MB_RAM_PER_INSTANCE = 500.0D;
 
     private List<InstanceAdd> instanceQueue = Collections.synchronizedList(new ArrayList<InstanceAdd>());
 
