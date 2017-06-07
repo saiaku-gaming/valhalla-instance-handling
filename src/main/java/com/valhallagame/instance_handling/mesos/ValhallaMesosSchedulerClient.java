@@ -326,7 +326,6 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
                 (task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).orElse(-1) : -1));
 
         OkHttpClient client = new OkHttpClient();
-        ObjectMapper mapper = new ObjectMapper();
 
         try {
             Request request = new Request.Builder()
