@@ -326,7 +326,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
                 (task != null ? task.container.docker.portMappings.stream().findAny().map(m -> m.hostPort).orElse(-1) : -1));
 
         OkHttpClient client = new OkHttpClient();
-
+        ObjectMapper mapper = new ObjectMapper();
         try {
             Request request = new Request.Builder()
                     .url(persistentBaseUrl + "/v1/server-instance-controller/update")
@@ -339,7 +339,7 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
             if (response.code() != 200) {
                 log.error("Message was: " + message);
                 log.error("Something went wrong on instance update to persistent, code: " + response.code()
-                        + " " + response.body().string() + " with request " + request.toString() + ": " + request.body().toString());
+                        + " " + response.body().string() + " with request " + request.toString() + ": ");
             }
         } catch (IOException e) {
             log.error("Something when wrong when trying to update persistent", e);
