@@ -337,11 +337,11 @@ public class ValhallaMesosSchedulerClient extends MesosSchedulerClient {
             Response response = client.newCall(request).execute();
 
             if (response.code() != 200) {
-                log.error("Something went wrong on instance update to persistent, code: " + response.code());
+                log.error("Something went wrong on instance update to persistent, code: " + response.code()
+                        + " " + response.body().string() + " with request " + request.toString());
             }
         } catch (IOException e) {
-            log.error("Something when wrong when trying to update persistent");
-            e.printStackTrace();
+            log.error("Something when wrong when trying to update persistent", e);
         }
     }
 
