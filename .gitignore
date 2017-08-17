@@ -67,3 +67,4 @@ local.properties
 # Intellik
 .idea
 instance-handling.iml
+/.apt_generated/
