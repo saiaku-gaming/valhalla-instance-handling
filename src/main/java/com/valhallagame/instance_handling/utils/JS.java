@@ -21,19 +21,19 @@ public class JS {
 
 	}
 
-	public static ResponseEntity<?> message(Status status, String message) {
+	public static ResponseEntity<JsonMessage> message(Status status, String message) {
 		return ResponseEntity.status(status.getStatusCode()).body(JS.message(message));
 	}
 	
-	public static ResponseEntity<?> message(HttpStatus status, String message) {
+	public static ResponseEntity<JsonMessage> message(HttpStatus status, String message) {
 		return ResponseEntity.status(status).body(JS.message(message));
 	}
 	
-	public static ResponseEntity<?> message(Status status, Object o) {
+	public static ResponseEntity<JsonNode> message(Status status, Object o) {
 		return ResponseEntity.status(status.getStatusCode()).body(JS.parse(o));
 	}
 
-	public static ResponseEntity<?> message(HttpStatus status, Object o) {
+	public static ResponseEntity<JsonNode> message(HttpStatus status, Object o) {
 		return ResponseEntity.status(status).body(JS.parse(o));
 	}
 
